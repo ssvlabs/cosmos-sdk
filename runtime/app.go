@@ -3,6 +3,7 @@ package runtime
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/cometbft/cometbft/crypto/bls12381"
 	"slices"
 
 	abci "github.com/cometbft/cometbft/api/cometbft/abci/v1"
@@ -307,6 +308,14 @@ func (a *App) UnsafeFindStoreKey(storeKey string) storetypes.StoreKey {
 // ValidatorKeyProvider returns a function that generates a private key for use by comet.
 func (a *App) ValidatorKeyProvider() KeyGenF {
 	return func() (cmtcrypto.PrivKey, error) {
+		if bls12381.Enabled {
+			pk, err := bls12381.GenPrivKey()
+			if err != nil {
+				return nil, fmt.Errorf("failed to generate BLS key: %w", err)
+			}
+			return pk, nil
+		}
+
 		return cmted25519.GenPrivKey(), nil
 	}
 }
