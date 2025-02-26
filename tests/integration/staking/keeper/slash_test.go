@@ -696,8 +696,7 @@ func TestFixAvoidFullSlashPenalty(t *testing.T) {
 	evilValAddr1 := sdk.ValAddress(evilValPubKey.Address())
 	createAccount(t, ctx, authKeeper, evilValAddr1.Bytes())
 	require.NoError(t, banktestutil.FundAccount(ctx, bankKeeper, sdk.AccAddress(evilValAddr1), testCoins))
-	createValMsg1, _ := types.NewMsgCreateValidator(
-		evilValAddr1.String(), evilValPubKey, testCoins[0], types.Description{Details: "test"}, types.NewCommissionRates(math.LegacyNewDecWithPrec(5, 1), math.LegacyNewDecWithPrec(5, 1), math.LegacyNewDec(0)), math.OneInt())
+	createValMsg1, _ := types.NewMsgCreateValidator(evilValAddr1.String(), evilValPubKey, types.Description{Details: "test"}, types.NewCommissionRates(math.LegacyNewDecWithPrec(5, 1), math.LegacyNewDecWithPrec(5, 1), math.LegacyNewDec(0)), math.OneInt())
 	_, err = stakingMsgServer.CreateValidator(ctx, createValMsg1)
 	require.NoError(t, err)
 	// very small amount coin for evilValAddr2
@@ -705,8 +704,7 @@ func TestFixAvoidFullSlashPenalty(t *testing.T) {
 	// create evilValAddr2 to circumvent slashing
 	evilValAddr2 := sdk.ValAddress(evilValPubKey2.Address())
 	require.NoError(t, banktestutil.FundAccount(ctx, bankKeeper, sdk.AccAddress(evilValAddr2), smallCoins))
-	createValMsg3, _ := types.NewMsgCreateValidator(
-		evilValAddr2.String(), evilValPubKey2, smallCoins[0], types.Description{Details: "test"}, types.NewCommissionRates(math.LegacyNewDecWithPrec(5, 1), math.LegacyNewDecWithPrec(5, 1), math.LegacyNewDec(0)), math.OneInt())
+	createValMsg3, _ := types.NewMsgCreateValidator(evilValAddr2.String(), evilValPubKey2, types.Description{Details: "test"}, types.NewCommissionRates(math.LegacyNewDecWithPrec(5, 1), math.LegacyNewDecWithPrec(5, 1), math.LegacyNewDec(0)), math.OneInt())
 	createAccount(t, ctx, authKeeper, evilValAddr2.Bytes())
 	_, err = stakingMsgServer.CreateValidator(ctx, createValMsg3)
 	require.NoError(t, err)

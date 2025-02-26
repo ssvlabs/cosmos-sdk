@@ -344,7 +344,7 @@ func (s *KeeperTestSuite) TestMsgEditValidator() {
 	require.NotNil(pk)
 
 	comm := types.NewCommissionRates(math.LegacyNewDec(0), math.LegacyNewDec(0), math.LegacyNewDec(0))
-	msg, err := types.NewMsgCreateValidator(s.valAddressToString(ValAddr), pk, sdk.NewCoin(sdk.DefaultBondDenom, math.NewInt(10)), types.Description{Moniker: "NewVal"}, comm, math.OneInt())
+	msg, err := types.NewMsgCreateValidator(s.valAddressToString(ValAddr), pk, types.Description{Moniker: "NewVal"}, comm, math.OneInt())
 	require.NoError(err)
 
 	res, err := msgServer.CreateValidator(ctx, msg)
@@ -517,7 +517,7 @@ func (s *KeeperTestSuite) TestMsgDelegate() {
 
 	comm := types.NewCommissionRates(math.LegacyNewDec(0), math.LegacyNewDec(0), math.LegacyNewDec(0))
 
-	msg, err := types.NewMsgCreateValidator(s.valAddressToString(ValAddr), pk, sdk.NewCoin(sdk.DefaultBondDenom, math.NewInt(10)), types.Description{Moniker: "NewVal"}, comm, math.OneInt())
+	msg, err := types.NewMsgCreateValidator(s.valAddressToString(ValAddr), pk, types.Description{Moniker: "NewVal"}, comm, math.OneInt())
 	require.NoError(err)
 
 	res, err := msgServer.CreateValidator(ctx, msg)
@@ -641,14 +641,14 @@ func (s *KeeperTestSuite) TestMsgBeginRedelegate() {
 	comm := types.NewCommissionRates(math.LegacyNewDec(0), math.LegacyNewDec(0), math.LegacyNewDec(0))
 	amt := sdk.Coin{Denom: sdk.DefaultBondDenom, Amount: keeper.TokensFromConsensusPower(s.ctx, int64(100))}
 
-	msg, err := types.NewMsgCreateValidator(s.valAddressToString(srcValAddr), pk, amt, types.Description{Moniker: "NewVal"}, comm, math.OneInt())
+	msg, err := types.NewMsgCreateValidator(s.valAddressToString(srcValAddr), pk, types.Description{Moniker: "NewVal"}, comm, math.OneInt())
 	require.NoError(err)
 	res, err := msgServer.CreateValidator(ctx, msg)
 	require.NoError(err)
 	require.NotNil(res)
 	s.bankKeeper.EXPECT().DelegateCoinsFromAccountToModule(gomock.Any(), addr2, types.NotBondedPoolName, gomock.Any()).AnyTimes()
 
-	msg, err = types.NewMsgCreateValidator(s.valAddressToString(dstValAddr), dstPk, amt, types.Description{Moniker: "NewVal"}, comm, math.OneInt())
+	msg, err = types.NewMsgCreateValidator(s.valAddressToString(dstValAddr), dstPk, types.Description{Moniker: "NewVal"}, comm, math.OneInt())
 	require.NoError(err)
 
 	res, err = msgServer.CreateValidator(ctx, msg)
@@ -802,7 +802,7 @@ func (s *KeeperTestSuite) TestMsgUndelegate() {
 	comm := types.NewCommissionRates(math.LegacyNewDec(0), math.LegacyNewDec(0), math.LegacyNewDec(0))
 	amt := sdk.Coin{Denom: sdk.DefaultBondDenom, Amount: keeper.TokensFromConsensusPower(s.ctx, int64(100))}
 
-	msg, err := types.NewMsgCreateValidator(s.valAddressToString(ValAddr), pk, amt, types.Description{Moniker: "NewVal"}, comm, math.OneInt())
+	msg, err := types.NewMsgCreateValidator(s.valAddressToString(ValAddr), pk, types.Description{Moniker: "NewVal"}, comm, math.OneInt())
 	require.NoError(err)
 	res, err := msgServer.CreateValidator(ctx, msg)
 	require.NoError(err)
@@ -926,7 +926,7 @@ func (s *KeeperTestSuite) TestMsgCancelUnbondingDelegation() {
 
 	s.bankKeeper.EXPECT().DelegateCoinsFromAccountToModule(gomock.Any(), Addr, types.NotBondedPoolName, gomock.Any()).AnyTimes()
 
-	msg, err := types.NewMsgCreateValidator(s.valAddressToString(ValAddr), pk, amt, types.Description{Moniker: "NewVal"}, comm, math.OneInt())
+	msg, err := types.NewMsgCreateValidator(s.valAddressToString(ValAddr), pk, types.Description{Moniker: "NewVal"}, comm, math.OneInt())
 	require.NoError(err)
 	res, err := msgServer.CreateValidator(ctx, msg)
 	require.NoError(err)
@@ -1084,7 +1084,7 @@ func (s *KeeperTestSuite) TestMsgUpdateParams() {
 	require.NotNil(pk)
 	comm := types.NewCommissionRates(math.LegacyNewDec(0), math.LegacyNewDec(0), math.LegacyNewDec(0))
 	s.bankKeeper.EXPECT().DelegateCoinsFromAccountToModule(gomock.Any(), Addr, types.NotBondedPoolName, gomock.Any()).AnyTimes()
-	msg, err := types.NewMsgCreateValidator(s.valAddressToString(ValAddr), pk, sdk.NewCoin(sdk.DefaultBondDenom, math.NewInt(10)), types.Description{Moniker: "NewVal"}, comm, math.OneInt())
+	msg, err := types.NewMsgCreateValidator(s.valAddressToString(ValAddr), pk, types.Description{Moniker: "NewVal"}, comm, math.OneInt())
 	require.NoError(err)
 	_, err = msgServer.CreateValidator(ctx, msg)
 	require.NoError(err)

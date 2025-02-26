@@ -77,45 +77,45 @@ func (k Keeper) BlockValidatorUpdates(ctx context.Context) ([]appmodule.Validato
 	}
 
 	// Remove all mature redelegations from the red queue.
-	matureRedelegations, err := k.DequeueAllMatureRedelegationQueue(ctx, time)
-	if err != nil {
-		return nil, err
-	}
+	//matureRedelegations, err := k.DequeueAllMatureRedelegationQueue(ctx, time)
+	//if err != nil {
+	//	return nil, err
+	//}
 
-	for _, dvvTriplet := range matureRedelegations {
-		valSrcAddr, err := k.validatorAddressCodec.StringToBytes(dvvTriplet.ValidatorSrcAddress)
-		if err != nil {
-			return nil, err
-		}
-		valDstAddr, err := k.validatorAddressCodec.StringToBytes(dvvTriplet.ValidatorDstAddress)
-		if err != nil {
-			return nil, err
-		}
-		delegatorAddress, err := k.authKeeper.AddressCodec().StringToBytes(dvvTriplet.DelegatorAddress)
-		if err != nil {
-			return nil, err
-		}
-
-		balances, err := k.CompleteRedelegation(
-			ctx,
-			delegatorAddress,
-			valSrcAddr,
-			valDstAddr,
-		)
-		if err != nil {
-			continue
-		}
-
-		if err := k.EventService.EventManager(ctx).EmitKV(
-			types.EventTypeCompleteRedelegation,
-			event.NewAttribute(sdk.AttributeKeyAmount, balances.String()),
-			event.NewAttribute(types.AttributeKeyDelegator, dvvTriplet.DelegatorAddress),
-			event.NewAttribute(types.AttributeKeySrcValidator, dvvTriplet.ValidatorSrcAddress),
-			event.NewAttribute(types.AttributeKeyDstValidator, dvvTriplet.ValidatorDstAddress),
-		); err != nil {
-			return nil, err
-		}
-	}
+	//for _, dvvTriplet := range matureRedelegations {
+	//	valSrcAddr, err := k.validatorAddressCodec.StringToBytes(dvvTriplet.ValidatorSrcAddress)
+	//	if err != nil {
+	//		return nil, err
+	//	}
+	//	valDstAddr, err := k.validatorAddressCodec.StringToBytes(dvvTriplet.ValidatorDstAddress)
+	//	if err != nil {
+	//		return nil, err
+	//	}
+	//	delegatorAddress, err := k.authKeeper.AddressCodec().StringToBytes(dvvTriplet.DelegatorAddress)
+	//	if err != nil {
+	//		return nil, err
+	//	}
+	//
+	//	balances, err := k.CompleteRedelegation(
+	//		ctx,
+	//		delegatorAddress,
+	//		valSrcAddr,
+	//		valDstAddr,
+	//	)
+	//	if err != nil {
+	//		continue
+	//	}
+	//
+	//	if err := k.EventService.EventManager(ctx).EmitKV(
+	//		types.EventTypeCompleteRedelegation,
+	//		event.NewAttribute(sdk.AttributeKeyAmount, balances.String()),
+	//		event.NewAttribute(types.AttributeKeyDelegator, dvvTriplet.DelegatorAddress),
+	//		event.NewAttribute(types.AttributeKeySrcValidator, dvvTriplet.ValidatorSrcAddress),
+	//		event.NewAttribute(types.AttributeKeyDstValidator, dvvTriplet.ValidatorDstAddress),
+	//	); err != nil {
+	//		return nil, err
+	//	}
+	//}
 
 	err = k.PurgeAllMaturedConsKeyRotatedKeys(ctx, time)
 	if err != nil {

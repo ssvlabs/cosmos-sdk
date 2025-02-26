@@ -88,9 +88,7 @@ func TestSlashingMsgs(t *testing.T) {
 
 	addrStrVal, err := valaddrCodec.BytesToString(addr1)
 	require.NoError(t, err)
-	createValidatorMsg, err := stakingtypes.NewMsgCreateValidator(
-		addrStrVal, valKey.PubKey(), bondCoin, description, commission, math.OneInt(),
-	)
+	createValidatorMsg, err := stakingtypes.NewMsgCreateValidator(addrStrVal, valKey.PubKey(), description, commission, math.OneInt())
 	require.NoError(t, err)
 
 	headerInfo := header.Info{Height: app.LastBlockHeight() + 1}

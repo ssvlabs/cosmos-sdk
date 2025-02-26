@@ -38,6 +38,51 @@ var _ = time.Kitchen
 // proto package needs to be updated.
 const _ = proto.GoGoProtoPackageIsVersion3 // please upgrade the proto package
 
+type Capital struct {
+	SlashableBalance    []TokenBalance        `protobuf:"bytes,1,rep,name=slashable_balance,json=slashableBalance,proto3" json:"slashable_balance"`
+	NonSlashableCapital cosmossdk_io_math.Int `protobuf:"bytes,2,opt,name=non_slashable_capital,json=nonSlashableCapital,proto3,customtype=cosmossdk.io/math.Int" json:"non_slashable_capital"`
+}
+
+func (m *Capital) Reset()         { *m = Capital{} }
+func (m *Capital) String() string { return proto.CompactTextString(m) }
+func (*Capital) ProtoMessage()    {}
+func (*Capital) Descriptor() ([]byte, []int) {
+	return fileDescriptor_0926ef28816b35ab, []int{0}
+}
+func (m *Capital) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *Capital) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_Capital.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *Capital) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_Capital.Merge(m, src)
+}
+func (m *Capital) XXX_Size() int {
+	return m.Size()
+}
+func (m *Capital) XXX_DiscardUnknown() {
+	xxx_messageInfo_Capital.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_Capital proto.InternalMessageInfo
+
+func (m *Capital) GetSlashableBalance() []TokenBalance {
+	if m != nil {
+		return m.SlashableBalance
+	}
+	return nil
+}
+
 // MsgCreateValidator defines a SDK message for creating a new validator.
 type MsgCreateValidator struct {
 	Description       Description           `protobuf:"bytes,1,opt,name=description,proto3" json:"description"`
@@ -46,17 +91,17 @@ type MsgCreateValidator struct {
 	// Deprecated: Use of Delegator Address in MsgCreateValidator is deprecated.
 	// The validator address bytes and delegator address bytes refer to the same account while creating validator (defer
 	// only in bech32 notation).
-	DelegatorAddress string     `protobuf:"bytes,4,opt,name=delegator_address,json=delegatorAddress,proto3" json:"delegator_address,omitempty"` // Deprecated: Do not use.
-	ValidatorAddress string     `protobuf:"bytes,5,opt,name=validator_address,json=validatorAddress,proto3" json:"validator_address,omitempty"`
-	Pubkey           *any.Any   `protobuf:"bytes,6,opt,name=pubkey,proto3" json:"pubkey,omitempty"`
-	Value            types.Coin `protobuf:"bytes,7,opt,name=value,proto3" json:"value"`
+	DelegatorAddress string   `protobuf:"bytes,4,opt,name=delegator_address,json=delegatorAddress,proto3" json:"delegator_address,omitempty"` // Deprecated: Do not use.
+	ValidatorAddress string   `protobuf:"bytes,5,opt,name=validator_address,json=validatorAddress,proto3" json:"validator_address,omitempty"`
+	Pubkey           *any.Any `protobuf:"bytes,6,opt,name=pubkey,proto3" json:"pubkey,omitempty"`
+	Capital          Capital  `protobuf:"bytes,7,opt,name=capital,proto3" json:"capital"`
 }
 
 func (m *MsgCreateValidator) Reset()         { *m = MsgCreateValidator{} }
 func (m *MsgCreateValidator) String() string { return proto.CompactTextString(m) }
 func (*MsgCreateValidator) ProtoMessage()    {}
 func (*MsgCreateValidator) Descriptor() ([]byte, []int) {
-	return fileDescriptor_0926ef28816b35ab, []int{0}
+	return fileDescriptor_0926ef28816b35ab, []int{1}
 }
 func (m *MsgCreateValidator) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -93,7 +138,7 @@ func (m *MsgCreateValidatorResponse) Reset()         { *m = MsgCreateValidatorRe
 func (m *MsgCreateValidatorResponse) String() string { return proto.CompactTextString(m) }
 func (*MsgCreateValidatorResponse) ProtoMessage()    {}
 func (*MsgCreateValidatorResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_0926ef28816b35ab, []int{1}
+	return fileDescriptor_0926ef28816b35ab, []int{2}
 }
 func (m *MsgCreateValidatorResponse) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -138,7 +183,7 @@ func (m *MsgEditValidator) Reset()         { *m = MsgEditValidator{} }
 func (m *MsgEditValidator) String() string { return proto.CompactTextString(m) }
 func (*MsgEditValidator) ProtoMessage()    {}
 func (*MsgEditValidator) Descriptor() ([]byte, []int) {
-	return fileDescriptor_0926ef28816b35ab, []int{2}
+	return fileDescriptor_0926ef28816b35ab, []int{3}
 }
 func (m *MsgEditValidator) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -175,7 +220,7 @@ func (m *MsgEditValidatorResponse) Reset()         { *m = MsgEditValidatorRespon
 func (m *MsgEditValidatorResponse) String() string { return proto.CompactTextString(m) }
 func (*MsgEditValidatorResponse) ProtoMessage()    {}
 func (*MsgEditValidatorResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_0926ef28816b35ab, []int{3}
+	return fileDescriptor_0926ef28816b35ab, []int{4}
 }
 func (m *MsgEditValidatorResponse) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -207,16 +252,16 @@ var xxx_messageInfo_MsgEditValidatorResponse proto.InternalMessageInfo
 // MsgDelegate defines a SDK message for performing a delegation of coins
 // from a delegator to a validator.
 type MsgDelegate struct {
-	DelegatorAddress string     `protobuf:"bytes,1,opt,name=delegator_address,json=delegatorAddress,proto3" json:"delegator_address,omitempty"`
-	ValidatorAddress string     `protobuf:"bytes,2,opt,name=validator_address,json=validatorAddress,proto3" json:"validator_address,omitempty"`
-	Amount           types.Coin `protobuf:"bytes,3,opt,name=amount,proto3" json:"amount"`
+	DelegatorAddress string  `protobuf:"bytes,1,opt,name=delegator_address,json=delegatorAddress,proto3" json:"delegator_address,omitempty"`
+	ValidatorAddress string  `protobuf:"bytes,2,opt,name=validator_address,json=validatorAddress,proto3" json:"validator_address,omitempty"`
+	Capital          Capital `protobuf:"bytes,3,opt,name=capital,proto3" json:"capital"`
 }
 
 func (m *MsgDelegate) Reset()         { *m = MsgDelegate{} }
 func (m *MsgDelegate) String() string { return proto.CompactTextString(m) }
 func (*MsgDelegate) ProtoMessage()    {}
 func (*MsgDelegate) Descriptor() ([]byte, []int) {
-	return fileDescriptor_0926ef28816b35ab, []int{4}
+	return fileDescriptor_0926ef28816b35ab, []int{5}
 }
 func (m *MsgDelegate) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -253,7 +298,7 @@ func (m *MsgDelegateResponse) Reset()         { *m = MsgDelegateResponse{} }
 func (m *MsgDelegateResponse) String() string { return proto.CompactTextString(m) }
 func (*MsgDelegateResponse) ProtoMessage()    {}
 func (*MsgDelegateResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_0926ef28816b35ab, []int{5}
+	return fileDescriptor_0926ef28816b35ab, []int{6}
 }
 func (m *MsgDelegateResponse) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -282,93 +327,6 @@ func (m *MsgDelegateResponse) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_MsgDelegateResponse proto.InternalMessageInfo
 
-// MsgBeginRedelegate defines a SDK message for performing a redelegation
-// of coins from a delegator and source validator to a destination validator.
-type MsgBeginRedelegate struct {
-	DelegatorAddress    string     `protobuf:"bytes,1,opt,name=delegator_address,json=delegatorAddress,proto3" json:"delegator_address,omitempty"`
-	ValidatorSrcAddress string     `protobuf:"bytes,2,opt,name=validator_src_address,json=validatorSrcAddress,proto3" json:"validator_src_address,omitempty"`
-	ValidatorDstAddress string     `protobuf:"bytes,3,opt,name=validator_dst_address,json=validatorDstAddress,proto3" json:"validator_dst_address,omitempty"`
-	Amount              types.Coin `protobuf:"bytes,4,opt,name=amount,proto3" json:"amount"`
-}
-
-func (m *MsgBeginRedelegate) Reset()         { *m = MsgBeginRedelegate{} }
-func (m *MsgBeginRedelegate) String() string { return proto.CompactTextString(m) }
-func (*MsgBeginRedelegate) ProtoMessage()    {}
-func (*MsgBeginRedelegate) Descriptor() ([]byte, []int) {
-	return fileDescriptor_0926ef28816b35ab, []int{6}
-}
-func (m *MsgBeginRedelegate) XXX_Unmarshal(b []byte) error {
-	return m.Unmarshal(b)
-}
-func (m *MsgBeginRedelegate) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	if deterministic {
-		return xxx_messageInfo_MsgBeginRedelegate.Marshal(b, m, deterministic)
-	} else {
-		b = b[:cap(b)]
-		n, err := m.MarshalToSizedBuffer(b)
-		if err != nil {
-			return nil, err
-		}
-		return b[:n], nil
-	}
-}
-func (m *MsgBeginRedelegate) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_MsgBeginRedelegate.Merge(m, src)
-}
-func (m *MsgBeginRedelegate) XXX_Size() int {
-	return m.Size()
-}
-func (m *MsgBeginRedelegate) XXX_DiscardUnknown() {
-	xxx_messageInfo_MsgBeginRedelegate.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_MsgBeginRedelegate proto.InternalMessageInfo
-
-// MsgBeginRedelegateResponse defines the Msg/BeginRedelegate response type.
-type MsgBeginRedelegateResponse struct {
-	CompletionTime time.Time `protobuf:"bytes,1,opt,name=completion_time,json=completionTime,proto3,stdtime" json:"completion_time"`
-}
-
-func (m *MsgBeginRedelegateResponse) Reset()         { *m = MsgBeginRedelegateResponse{} }
-func (m *MsgBeginRedelegateResponse) String() string { return proto.CompactTextString(m) }
-func (*MsgBeginRedelegateResponse) ProtoMessage()    {}
-func (*MsgBeginRedelegateResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_0926ef28816b35ab, []int{7}
-}
-func (m *MsgBeginRedelegateResponse) XXX_Unmarshal(b []byte) error {
-	return m.Unmarshal(b)
-}
-func (m *MsgBeginRedelegateResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	if deterministic {
-		return xxx_messageInfo_MsgBeginRedelegateResponse.Marshal(b, m, deterministic)
-	} else {
-		b = b[:cap(b)]
-		n, err := m.MarshalToSizedBuffer(b)
-		if err != nil {
-			return nil, err
-		}
-		return b[:n], nil
-	}
-}
-func (m *MsgBeginRedelegateResponse) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_MsgBeginRedelegateResponse.Merge(m, src)
-}
-func (m *MsgBeginRedelegateResponse) XXX_Size() int {
-	return m.Size()
-}
-func (m *MsgBeginRedelegateResponse) XXX_DiscardUnknown() {
-	xxx_messageInfo_MsgBeginRedelegateResponse.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_MsgBeginRedelegateResponse proto.InternalMessageInfo
-
-func (m *MsgBeginRedelegateResponse) GetCompletionTime() time.Time {
-	if m != nil {
-		return m.CompletionTime
-	}
-	return time.Time{}
-}
-
 // MsgUndelegate defines a SDK message for performing an undelegation from a
 // delegate and a validator.
 type MsgUndelegate struct {
@@ -381,7 +339,7 @@ func (m *MsgUndelegate) Reset()         { *m = MsgUndelegate{} }
 func (m *MsgUndelegate) String() string { return proto.CompactTextString(m) }
 func (*MsgUndelegate) ProtoMessage()    {}
 func (*MsgUndelegate) Descriptor() ([]byte, []int) {
-	return fileDescriptor_0926ef28816b35ab, []int{8}
+	return fileDescriptor_0926ef28816b35ab, []int{7}
 }
 func (m *MsgUndelegate) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -421,7 +379,7 @@ func (m *MsgUndelegateResponse) Reset()         { *m = MsgUndelegateResponse{} }
 func (m *MsgUndelegateResponse) String() string { return proto.CompactTextString(m) }
 func (*MsgUndelegateResponse) ProtoMessage()    {}
 func (*MsgUndelegateResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_0926ef28816b35ab, []int{9}
+	return fileDescriptor_0926ef28816b35ab, []int{8}
 }
 func (m *MsgUndelegateResponse) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -478,7 +436,7 @@ func (m *MsgCancelUnbondingDelegation) Reset()         { *m = MsgCancelUnbonding
 func (m *MsgCancelUnbondingDelegation) String() string { return proto.CompactTextString(m) }
 func (*MsgCancelUnbondingDelegation) ProtoMessage()    {}
 func (*MsgCancelUnbondingDelegation) Descriptor() ([]byte, []int) {
-	return fileDescriptor_0926ef28816b35ab, []int{10}
+	return fileDescriptor_0926ef28816b35ab, []int{9}
 }
 func (m *MsgCancelUnbondingDelegation) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -515,7 +473,7 @@ func (m *MsgCancelUnbondingDelegationResponse) Reset()         { *m = MsgCancelU
 func (m *MsgCancelUnbondingDelegationResponse) String() string { return proto.CompactTextString(m) }
 func (*MsgCancelUnbondingDelegationResponse) ProtoMessage()    {}
 func (*MsgCancelUnbondingDelegationResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_0926ef28816b35ab, []int{11}
+	return fileDescriptor_0926ef28816b35ab, []int{10}
 }
 func (m *MsgCancelUnbondingDelegationResponse) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -558,7 +516,7 @@ func (m *MsgUpdateParams) Reset()         { *m = MsgUpdateParams{} }
 func (m *MsgUpdateParams) String() string { return proto.CompactTextString(m) }
 func (*MsgUpdateParams) ProtoMessage()    {}
 func (*MsgUpdateParams) Descriptor() ([]byte, []int) {
-	return fileDescriptor_0926ef28816b35ab, []int{12}
+	return fileDescriptor_0926ef28816b35ab, []int{11}
 }
 func (m *MsgUpdateParams) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -610,7 +568,7 @@ func (m *MsgUpdateParamsResponse) Reset()         { *m = MsgUpdateParamsResponse
 func (m *MsgUpdateParamsResponse) String() string { return proto.CompactTextString(m) }
 func (*MsgUpdateParamsResponse) ProtoMessage()    {}
 func (*MsgUpdateParamsResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_0926ef28816b35ab, []int{13}
+	return fileDescriptor_0926ef28816b35ab, []int{12}
 }
 func (m *MsgUpdateParamsResponse) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -649,7 +607,7 @@ func (m *MsgRotateConsPubKey) Reset()         { *m = MsgRotateConsPubKey{} }
 func (m *MsgRotateConsPubKey) String() string { return proto.CompactTextString(m) }
 func (*MsgRotateConsPubKey) ProtoMessage()    {}
 func (*MsgRotateConsPubKey) Descriptor() ([]byte, []int) {
-	return fileDescriptor_0926ef28816b35ab, []int{14}
+	return fileDescriptor_0926ef28816b35ab, []int{13}
 }
 func (m *MsgRotateConsPubKey) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -687,7 +645,7 @@ func (m *MsgRotateConsPubKeyResponse) Reset()         { *m = MsgRotateConsPubKey
 func (m *MsgRotateConsPubKeyResponse) String() string { return proto.CompactTextString(m) }
 func (*MsgRotateConsPubKeyResponse) ProtoMessage()    {}
 func (*MsgRotateConsPubKeyResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_0926ef28816b35ab, []int{15}
+	return fileDescriptor_0926ef28816b35ab, []int{14}
 }
 func (m *MsgRotateConsPubKeyResponse) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -717,14 +675,13 @@ func (m *MsgRotateConsPubKeyResponse) XXX_DiscardUnknown() {
 var xxx_messageInfo_MsgRotateConsPubKeyResponse proto.InternalMessageInfo
 
 func init() {
+	proto.RegisterType((*Capital)(nil), "cosmos.staking.v1beta1.Capital")
 	proto.RegisterType((*MsgCreateValidator)(nil), "cosmos.staking.v1beta1.MsgCreateValidator")
 	proto.RegisterType((*MsgCreateValidatorResponse)(nil), "cosmos.staking.v1beta1.MsgCreateValidatorResponse")
 	proto.RegisterType((*MsgEditValidator)(nil), "cosmos.staking.v1beta1.MsgEditValidator")
 	proto.RegisterType((*MsgEditValidatorResponse)(nil), "cosmos.staking.v1beta1.MsgEditValidatorResponse")
 	proto.RegisterType((*MsgDelegate)(nil), "cosmos.staking.v1beta1.MsgDelegate")
 	proto.RegisterType((*MsgDelegateResponse)(nil), "cosmos.staking.v1beta1.MsgDelegateResponse")
-	proto.RegisterType((*MsgBeginRedelegate)(nil), "cosmos.staking.v1beta1.MsgBeginRedelegate")
-	proto.RegisterType((*MsgBeginRedelegateResponse)(nil), "cosmos.staking.v1beta1.MsgBeginRedelegateResponse")
 	proto.RegisterType((*MsgUndelegate)(nil), "cosmos.staking.v1beta1.MsgUndelegate")
 	proto.RegisterType((*MsgUndelegateResponse)(nil), "cosmos.staking.v1beta1.MsgUndelegateResponse")
 	proto.RegisterType((*MsgCancelUnbondingDelegation)(nil), "cosmos.staking.v1beta1.MsgCancelUnbondingDelegation")
@@ -738,87 +695,87 @@ func init() {
 func init() { proto.RegisterFile("cosmos/staking/v1beta1/tx.proto", fileDescriptor_0926ef28816b35ab) }
 
 var fileDescriptor_0926ef28816b35ab = []byte{
-	// 1277 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xdc, 0x57, 0x41, 0x4f, 0x1b, 0x47,
-	0x14, 0xf6, 0xda, 0x09, 0x29, 0x43, 0xc1, 0xb0, 0x40, 0x62, 0x16, 0x6a, 0xd3, 0x0d, 0x15, 0x94,
-	0xca, 0x6b, 0x20, 0x01, 0x54, 0x27, 0xaa, 0x82, 0x21, 0x6d, 0xd3, 0x96, 0x16, 0x2d, 0x21, 0x95,
-	0xaa, 0xb6, 0xee, 0x78, 0x77, 0x58, 0x56, 0x78, 0x77, 0x9c, 0x9d, 0x31, 0x89, 0x0f, 0x95, 0xaa,
-	0x9e, 0x9a, 0x9e, 0x72, 0xaf, 0x2a, 0xa5, 0x52, 0x2b, 0xf5, 0xc8, 0x81, 0x63, 0x7f, 0x40, 0x94,
-	0x53, 0x44, 0x2f, 0x51, 0x0e, 0xb4, 0x82, 0x03, 0xfd, 0x0f, 0xb9, 0x54, 0xbb, 0x3b, 0x5e, 0x7b,
-	0xd7, 0xde, 0xc5, 0xd0, 0xe6, 0x92, 0x4b, 0x62, 0xde, 0x7c, 0xf3, 0xcd, 0xcc, 0xf7, 0xbe, 0x79,
-	0xf3, 0x16, 0x64, 0x14, 0x4c, 0x0c, 0x4c, 0x72, 0x84, 0xc2, 0x6d, 0xdd, 0xd4, 0x72, 0x3b, 0xb3,
-	0x25, 0x44, 0xe1, 0x6c, 0x8e, 0xde, 0x97, 0x2a, 0x16, 0xa6, 0x98, 0xbf, 0xe8, 0x02, 0x24, 0x06,
-	0x90, 0x18, 0x40, 0x18, 0xd1, 0x30, 0xd6, 0xca, 0x28, 0xe7, 0xa0, 0x4a, 0xd5, 0xcd, 0x1c, 0x34,
-	0x6b, 0xee, 0x14, 0x21, 0x13, 0x1c, 0xa2, 0xba, 0x81, 0x08, 0x85, 0x46, 0x85, 0x01, 0x86, 0x34,
-	0xac, 0x61, 0xe7, 0x67, 0xce, 0xfe, 0xc5, 0xa2, 0x23, 0xee, 0x4a, 0x45, 0x77, 0x80, 0x2d, 0xeb,
-	0x0e, 0xa5, 0xd9, 0x2e, 0x4b, 0x90, 0x20, 0x6f, 0x8b, 0x0a, 0xd6, 0x4d, 0x36, 0x3e, 0x11, 0x72,
-	0x8a, 0xfa, 0xa6, 0x5d, 0xd4, 0x25, 0x86, 0x32, 0x88, 0x8d, 0xb0, 0xff, 0x63, 0x03, 0x03, 0xd0,
-	0xd0, 0x4d, 0x9c, 0x73, 0xfe, 0x75, 0x43, 0xe2, 0x8b, 0x73, 0x80, 0x5f, 0x25, 0xda, 0xb2, 0x85,
-	0x20, 0x45, 0x77, 0x60, 0x59, 0x57, 0x21, 0xc5, 0x16, 0xbf, 0x06, 0x7a, 0x54, 0x44, 0x14, 0x4b,
-	0xaf, 0x50, 0x1d, 0x9b, 0x29, 0x6e, 0x9c, 0x9b, 0xea, 0x99, 0xbb, 0x2c, 0xb5, 0xd7, 0x48, 0x5a,
-	0x69, 0x40, 0x0b, 0xdd, 0x8f, 0x0f, 0x32, 0xb1, 0xdf, 0x8f, 0x77, 0xa7, 0x39, 0xb9, 0x99, 0x82,
-	0x97, 0x01, 0x50, 0xb0, 0x61, 0xe8, 0x84, 0xd8, 0x84, 0x71, 0x87, 0x70, 0x32, 0x8c, 0x70, 0xd9,
-	0x43, 0xca, 0x90, 0x22, 0xd2, 0x4c, 0xda, 0xc4, 0xc2, 0x7f, 0x03, 0x06, 0x0d, 0xdd, 0x2c, 0x12,
-	0x54, 0xde, 0x2c, 0xaa, 0xa8, 0x8c, 0x34, 0xe8, 0xec, 0x36, 0x31, 0xce, 0x4d, 0x75, 0x17, 0x66,
-	0xec, 0x39, 0xcf, 0x0f, 0x32, 0xc3, 0xee, 0x1a, 0x44, 0xdd, 0x96, 0x74, 0x9c, 0x33, 0x20, 0xdd,
-	0x92, 0x6e, 0x99, 0x74, 0x7f, 0x2f, 0x0b, 0xd8, 0xe2, 0xb7, 0x4c, 0xea, 0x52, 0x0f, 0x18, 0xba,
-	0xb9, 0x8e, 0xca, 0x9b, 0x2b, 0x1e, 0x15, 0xff, 0x01, 0x18, 0x60, 0xc4, 0xd8, 0x2a, 0x42, 0x55,
-	0xb5, 0x10, 0x21, 0xa9, 0x73, 0x0e, 0xbf, 0xb0, 0xbf, 0x97, 0x1d, 0x62, 0x14, 0x4b, 0xee, 0xc8,
-	0x3a, 0xb5, 0x74, 0x53, 0x4b, 0x71, 0x72, 0xbf, 0x37, 0x89, 0x8d, 0xf0, 0x9f, 0x82, 0x81, 0x9d,
-	0xba, 0xba, 0x1e, 0xd1, 0x79, 0x87, 0xe8, 0xcd, 0xfd, 0xbd, 0xec, 0x1b, 0x8c, 0xc8, 0xcb, 0x80,
-	0x8f, 0x51, 0xee, 0xdf, 0x09, 0xc4, 0xf9, 0xf7, 0x41, 0x57, 0xa5, 0x5a, 0xda, 0x46, 0xb5, 0x54,
-	0x97, 0x23, 0xe5, 0x90, 0xe4, 0x9a, 0x51, 0xaa, 0x9b, 0x51, 0x5a, 0x32, 0x6b, 0x85, 0xd4, 0x93,
-	0xc6, 0x1e, 0x15, 0xab, 0x56, 0xa1, 0x58, 0x5a, 0xab, 0x96, 0x3e, 0x46, 0x35, 0x99, 0xcd, 0xe6,
-	0xf3, 0xe0, 0xfc, 0x0e, 0x2c, 0x57, 0x51, 0xea, 0x82, 0x43, 0x33, 0x52, 0xcf, 0x88, 0xed, 0xc0,
-	0xa6, 0x74, 0xe8, 0xbe, 0xc4, 0xba, 0x53, 0xf2, 0x37, 0x7e, 0x78, 0x94, 0x89, 0xfd, 0xf3, 0x28,
-	0x13, 0xfb, 0xfe, 0x78, 0x77, 0xba, 0xf5, 0x78, 0x3f, 0x1e, 0xef, 0x4e, 0xb3, 0x73, 0x65, 0x89,
-	0xba, 0x9d, 0x6b, 0xb5, 0x99, 0x38, 0x06, 0x84, 0xd6, 0xa8, 0x8c, 0x48, 0x05, 0x9b, 0x04, 0x89,
-	0xbf, 0x25, 0x40, 0xff, 0x2a, 0xd1, 0x6e, 0xaa, 0x3a, 0x7d, 0x99, 0xce, 0x6c, 0x9b, 0x9a, 0xf8,
-	0xd9, 0x53, 0x73, 0x07, 0x24, 0x1b, 0x1e, 0x2d, 0x5a, 0x90, 0x22, 0xe6, 0xc8, 0xec, 0xf3, 0x83,
-	0xcc, 0x68, 0xab, 0x1b, 0x3f, 0x41, 0x1a, 0x54, 0x6a, 0x2b, 0x48, 0x69, 0xf2, 0xe4, 0x0a, 0x52,
-	0xe4, 0x3e, 0xc5, 0x77, 0x0b, 0xf8, 0xcf, 0xdb, 0xbb, 0xdd, 0x75, 0xe3, 0x64, 0x87, 0x4e, 0x6f,
-	0x63, 0xf2, 0xfc, 0x7b, 0x27, 0xe7, 0x71, 0xd4, 0x9f, 0x47, 0x5f, 0x4a, 0x44, 0x01, 0xa4, 0x82,
-	0x31, 0x2f, 0x87, 0x3f, 0xc7, 0x41, 0xcf, 0x2a, 0xd1, 0xd8, 0x6a, 0x88, 0xbf, 0xd9, 0xee, 0x42,
-	0x71, 0xce, 0x11, 0x52, 0x61, 0x17, 0xaa, 0xd3, 0xeb, 0xf4, 0x1f, 0x72, 0x76, 0x1d, 0x74, 0x41,
-	0x03, 0x57, 0x4d, 0xea, 0xa4, 0xaa, 0xd3, 0x7b, 0xc0, 0xe6, 0xe4, 0xdf, 0xf5, 0x09, 0xd8, 0x72,
-	0x3e, 0x5b, 0xc0, 0x8b, 0x7e, 0x01, 0xeb, 0x7a, 0x88, 0xc3, 0x60, 0xb0, 0xe9, 0x4f, 0x4f, 0xb6,
-	0x07, 0x09, 0xa7, 0x2c, 0x17, 0x90, 0xa6, 0x9b, 0x32, 0x52, 0xff, 0x67, 0xf5, 0x36, 0xc0, 0x70,
-	0x43, 0x3d, 0x62, 0x29, 0xa7, 0x57, 0x70, 0xd0, 0x9b, 0xbf, 0x6e, 0x29, 0x6d, 0x69, 0x55, 0x42,
-	0x3d, 0xda, 0xc4, 0xe9, 0x69, 0x57, 0x08, 0x6d, 0xcd, 0xcd, 0xb9, 0x33, 0xe4, 0xe6, 0xc6, 0xc9,
-	0xb9, 0x09, 0x14, 0xa9, 0x80, 0xe8, 0x62, 0xc5, 0x29, 0x52, 0x81, 0x68, 0x3d, 0x53, 0xbc, 0xec,
-	0xdc, 0xf6, 0x4a, 0x19, 0xd9, 0x57, 0xa9, 0x68, 0x77, 0x00, 0xac, 0x26, 0x09, 0x2d, 0x15, 0xf9,
-	0x76, 0xbd, 0x3d, 0x28, 0xf4, 0xda, 0xfb, 0x7c, 0xf8, 0x57, 0x86, 0x73, 0xf7, 0xda, 0xd7, 0x60,
-	0xb0, 0x31, 0xe2, 0x2f, 0x71, 0xd0, 0xbb, 0x4a, 0xb4, 0x0d, 0x53, 0x7d, 0xa5, 0xaf, 0xcd, 0xb5,
-	0x93, 0x53, 0x93, 0xf2, 0xa7, 0xa6, 0xa1, 0x88, 0xf8, 0x07, 0x07, 0x86, 0x7d, 0x91, 0x97, 0x99,
-	0x11, 0xfe, 0x33, 0xef, 0xa0, 0xf1, 0x93, 0x0e, 0x3a, 0xe6, 0xf4, 0x1d, 0x7b, 0xd9, 0x64, 0x63,
-	0xeb, 0xe3, 0x33, 0xd2, 0xfc, 0x8c, 0xef, 0xec, 0xe2, 0x8b, 0x38, 0x18, 0xb3, 0x9f, 0x3e, 0x68,
-	0x2a, 0xa8, 0xbc, 0x61, 0x96, 0xb0, 0xa9, 0xea, 0xa6, 0xd6, 0xd4, 0x79, 0xbc, 0x8a, 0x19, 0xe7,
-	0x27, 0x41, 0x52, 0xb1, 0x1f, 0x7b, 0x3b, 0x31, 0x5b, 0x48, 0xd7, 0xb6, 0xdc, 0x3b, 0x9d, 0x90,
-	0xfb, 0xea, 0xe1, 0x0f, 0x9d, 0x68, 0xfe, 0xab, 0xba, 0x35, 0xf6, 0x83, 0x42, 0x5e, 0x5d, 0x08,
-	0x77, 0xcb, 0x64, 0xa0, 0xdb, 0x08, 0x13, 0x57, 0xbc, 0x06, 0x26, 0xa2, 0xc6, 0xeb, 0x56, 0xca,
-	0x0f, 0xb6, 0x59, 0x5e, 0x7c, 0xc6, 0x81, 0xa4, 0xed, 0xbc, 0x8a, 0x0a, 0x29, 0x5a, 0x83, 0x16,
-	0x34, 0x08, 0xbf, 0x00, 0xba, 0x61, 0x95, 0x6e, 0x61, 0x4b, 0xa7, 0xb5, 0x13, 0xb3, 0xd4, 0x80,
-	0xf2, 0x4b, 0xa0, 0xab, 0xe2, 0x30, 0x30, 0x5f, 0xa5, 0xc3, 0x1a, 0x19, 0x77, 0x1d, 0x9f, 0xa6,
-	0xee, 0xc4, 0xfc, 0x47, 0xad, 0x7b, 0x5c, 0xb4, 0x25, 0x6a, 0xac, 0x62, 0x4b, 0x33, 0xd1, 0x24,
-	0xcd, 0x7d, 0xef, 0xfb, 0x21, 0x70, 0x0c, 0x51, 0x02, 0x97, 0x02, 0xa1, 0x28, 0x29, 0x16, 0xc5,
-	0x9f, 0xe2, 0xce, 0xf3, 0x25, 0x63, 0x0a, 0x29, 0x5a, 0xc6, 0x26, 0x71, 0xbb, 0xcb, 0xf6, 0xae,
-	0xe3, 0xce, 0xee, 0xba, 0xaf, 0x01, 0x30, 0xd1, 0xbd, 0x22, 0xeb, 0x78, 0xe3, 0x11, 0x1d, 0xef,
-	0xdb, 0x61, 0x1d, 0xef, 0xfe, 0x5e, 0xb6, 0x97, 0xc5, 0x59, 0x0b, 0xdc, 0x6d, 0xa2, 0x7b, 0x6b,
-	0x0e, 0x63, 0xfe, 0x76, 0xa8, 0xdd, 0xe6, 0x67, 0xc3, 0x9b, 0xa2, 0xb4, 0xdf, 0x6e, 0x41, 0x15,
-	0xc4, 0x39, 0x30, 0xda, 0x26, 0x1c, 0xa1, 0xe8, 0xfc, 0xec, 0xdc, 0x9f, 0x17, 0x40, 0x62, 0x95,
-	0x68, 0xfc, 0x5d, 0x90, 0x0c, 0x7e, 0x93, 0x4d, 0x87, 0x79, 0xa3, 0xb5, 0x85, 0x16, 0xe6, 0x3a,
-	0xc7, 0x7a, 0x75, 0x73, 0x1b, 0xf4, 0xfa, 0x5b, 0xed, 0xa9, 0x08, 0x12, 0x1f, 0x52, 0x98, 0xe9,
-	0x14, 0xe9, 0x2d, 0xf6, 0x25, 0x78, 0xcd, 0xeb, 0x09, 0x2f, 0x47, 0xcc, 0xae, 0x83, 0x84, 0x77,
-	0x3a, 0x00, 0x79, 0xec, 0x77, 0x41, 0x32, 0xd8, 0x3a, 0x45, 0xa9, 0x17, 0xc0, 0x46, 0xaa, 0x17,
-	0xd6, 0x07, 0x94, 0x00, 0x68, 0x7a, 0xaf, 0xdf, 0x8a, 0x60, 0x68, 0xc0, 0x84, 0x6c, 0x47, 0x30,
-	0x6f, 0x8d, 0x5f, 0x39, 0x30, 0x12, 0xfe, 0x62, 0x5c, 0x8d, 0xca, 0x79, 0xd8, 0x2c, 0xe1, 0xfa,
-	0x59, 0x66, 0x79, 0x7d, 0xea, 0xe0, 0x93, 0xd6, 0x02, 0xc9, 0x7f, 0x0b, 0x5e, 0xf7, 0x15, 0xc7,
-	0xc9, 0xa8, 0x53, 0x36, 0x01, 0x85, 0x5c, 0x87, 0xc0, 0xa8, 0xe5, 0x17, 0xf9, 0x07, 0x1c, 0xe8,
-	0x6f, 0xa9, 0x48, 0x51, 0xf6, 0x09, 0x82, 0x85, 0x2b, 0xa7, 0x00, 0x47, 0xec, 0x65, 0x7e, 0x56,
-	0x38, 0xff, 0x9d, 0x5d, 0xab, 0x0b, 0x0b, 0x8f, 0x0f, 0xd3, 0xdc, 0xd3, 0xc3, 0x34, 0xf7, 0xf7,
-	0x61, 0x9a, 0x7b, 0x78, 0x94, 0x8e, 0x3d, 0x3d, 0x4a, 0xc7, 0x9e, 0x1d, 0xa5, 0x63, 0x5f, 0x8c,
-	0xf9, 0xbe, 0xd9, 0x1a, 0x95, 0x99, 0xd6, 0x2a, 0x88, 0x94, 0xba, 0x9c, 0xda, 0x76, 0xe5, 0xdf,
-	0x00, 0x00, 0x00, 0xff, 0xff, 0x0b, 0xcb, 0xe0, 0xf9, 0xbe, 0x12, 0x00, 0x00,
+	// 1275 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xdc, 0x56, 0xcf, 0x6f, 0x1b, 0x45,
+	0x14, 0xf6, 0xda, 0xd4, 0x25, 0x13, 0xd2, 0x24, 0x9b, 0xa6, 0x75, 0xb6, 0xc1, 0x0e, 0xdb, 0xa0,
+	0x84, 0x20, 0xaf, 0x93, 0xb4, 0x69, 0x84, 0x5b, 0x21, 0xe2, 0xa4, 0x40, 0x81, 0x40, 0xe4, 0xa4,
+	0x45, 0x42, 0x05, 0x33, 0xde, 0x9d, 0x6c, 0x56, 0xf6, 0xce, 0x18, 0xcf, 0x24, 0xad, 0x0f, 0x48,
+	0x08, 0x09, 0x09, 0x38, 0xf5, 0xce, 0xa5, 0x48, 0x20, 0x71, 0xcc, 0x21, 0x47, 0xfe, 0x80, 0xaa,
+	0x12, 0x52, 0x95, 0x53, 0xd5, 0x43, 0xa8, 0x92, 0x43, 0xf8, 0x1f, 0xb8, 0xa0, 0xdd, 0x9d, 0xfd,
+	0x65, 0x7b, 0x37, 0x26, 0x08, 0x09, 0x71, 0x49, 0xd6, 0x33, 0xdf, 0xbc, 0x1f, 0xdf, 0xfb, 0xe6,
+	0xcd, 0x03, 0x39, 0x95, 0x50, 0x93, 0xd0, 0x02, 0x65, 0xb0, 0x66, 0x60, 0xbd, 0xb0, 0x33, 0x57,
+	0x45, 0x0c, 0xce, 0x15, 0xd8, 0x7d, 0xa5, 0xd1, 0x24, 0x8c, 0x88, 0x17, 0x1c, 0x80, 0xc2, 0x01,
+	0x0a, 0x07, 0x48, 0x63, 0x3a, 0x21, 0x7a, 0x1d, 0x15, 0x6c, 0x54, 0x75, 0x7b, 0xb3, 0x00, 0x71,
+	0xcb, 0x39, 0x22, 0xe5, 0xda, 0xb7, 0x98, 0x61, 0x22, 0xca, 0xa0, 0xd9, 0xe0, 0x80, 0xf3, 0x3a,
+	0xd1, 0x89, 0xfd, 0x59, 0xb0, 0xbe, 0xf8, 0xea, 0x98, 0xe3, 0xa9, 0xe2, 0x6c, 0x70, 0xb7, 0xce,
+	0x56, 0x96, 0x47, 0x59, 0x85, 0x14, 0x79, 0x21, 0xaa, 0xc4, 0xc0, 0x7c, 0x7f, 0x32, 0x22, 0x0b,
+	0x37, 0x68, 0x07, 0x75, 0x91, 0xa3, 0x4c, 0x6a, 0x21, 0xac, 0x7f, 0x7c, 0x63, 0x18, 0x9a, 0x06,
+	0x26, 0x05, 0xfb, 0xaf, 0xb3, 0x24, 0xff, 0x26, 0x80, 0xb3, 0xcb, 0xb0, 0x61, 0x30, 0x58, 0x17,
+	0xef, 0x82, 0x61, 0x5a, 0x87, 0x74, 0x0b, 0x56, 0xeb, 0xa8, 0x52, 0x85, 0x75, 0x88, 0x55, 0x94,
+	0x11, 0x26, 0x52, 0xd3, 0xfd, 0xf3, 0x93, 0x4a, 0x77, 0x7a, 0x94, 0x0d, 0x52, 0x43, 0xb8, 0xe4,
+	0x60, 0x4b, 0x7d, 0x8f, 0x0e, 0x72, 0x89, 0x5f, 0x8e, 0x77, 0x67, 0x84, 0xf2, 0x90, 0x67, 0x89,
+	0x6f, 0x8a, 0x1a, 0x18, 0xc5, 0x04, 0x57, 0x7c, 0x0f, 0xaa, 0xe3, 0x36, 0x93, 0x9c, 0x10, 0xa6,
+	0xfb, 0x4a, 0xb3, 0xd6, 0xd9, 0x67, 0x07, 0xb9, 0x51, 0xc7, 0x11, 0xd5, 0x6a, 0x8a, 0x41, 0x0a,
+	0x26, 0x64, 0x5b, 0xca, 0x2d, 0xcc, 0xf6, 0xf7, 0xf2, 0x80, 0x47, 0x70, 0x0b, 0x33, 0xc7, 0xc5,
+	0x08, 0x26, 0x78, 0xdd, 0xb5, 0xc6, 0x73, 0x90, 0xbf, 0x39, 0x03, 0xc4, 0x55, 0xaa, 0x2f, 0x37,
+	0x11, 0x64, 0xe8, 0x0e, 0xac, 0x1b, 0x1a, 0x64, 0xa4, 0x29, 0xae, 0x81, 0x7e, 0x0d, 0x51, 0xb5,
+	0x69, 0x34, 0x98, 0x41, 0x70, 0x46, 0x98, 0x10, 0xa6, 0xfb, 0xe7, 0x2f, 0x47, 0x25, 0xb5, 0xe2,
+	0x43, 0x83, 0x39, 0x05, 0x4d, 0x88, 0x65, 0x00, 0x54, 0x62, 0x9a, 0x06, 0xa5, 0x96, 0xc1, 0xa4,
+	0x6d, 0x70, 0x2a, 0xca, 0xe0, 0xb2, 0x87, 0x2c, 0x43, 0x86, 0x68, 0xd0, 0x68, 0xc0, 0x8a, 0xf8,
+	0x39, 0x18, 0x31, 0x0d, 0x5c, 0xa1, 0xa8, 0xbe, 0x59, 0xd1, 0x50, 0x1d, 0xe9, 0xd0, 0x8e, 0x36,
+	0x75, 0x4a, 0x82, 0x86, 0x4d, 0x03, 0xaf, 0xa3, 0xfa, 0xe6, 0x8a, 0x67, 0x4a, 0x7c, 0x07, 0x0c,
+	0x73, 0xc3, 0xa4, 0x59, 0x81, 0x9a, 0xd6, 0x44, 0x94, 0x66, 0x5e, 0xb0, 0xed, 0x4b, 0xfb, 0x7b,
+	0xf9, 0xf3, 0xdc, 0xc4, 0x92, 0xb3, 0xb3, 0xce, 0x9a, 0x06, 0xd6, 0x33, 0x42, 0x79, 0xc8, 0x3b,
+	0xc4, 0x77, 0xc4, 0x0f, 0xc1, 0xf0, 0x8e, 0xcb, 0xae, 0x67, 0xe8, 0x8c, 0x6d, 0xe8, 0x95, 0xfd,
+	0xbd, 0xfc, 0xcb, 0xdc, 0x90, 0x57, 0x81, 0x90, 0xc5, 0xf2, 0xd0, 0x4e, 0xdb, 0xba, 0xf8, 0x36,
+	0x48, 0x37, 0xb6, 0xab, 0x35, 0xd4, 0xca, 0xa4, 0x6d, 0x2a, 0xcf, 0x2b, 0xce, 0xe5, 0x52, 0xdc,
+	0xcb, 0xa5, 0x2c, 0xe1, 0x56, 0x29, 0xf3, 0xd8, 0x8f, 0x51, 0x6d, 0xb6, 0x1a, 0x8c, 0x28, 0x6b,
+	0xdb, 0xd5, 0xf7, 0x51, 0xab, 0xcc, 0x4f, 0x8b, 0x2b, 0xe0, 0xac, 0xab, 0xab, 0xb3, 0xb6, 0xa1,
+	0x5c, 0x64, 0x4d, 0x1c, 0x58, 0xb0, 0x16, 0xee, 0xd1, 0xe2, 0x5b, 0xdf, 0x3e, 0xcc, 0x25, 0xfe,
+	0x78, 0x98, 0x4b, 0x7c, 0x7d, 0xbc, 0x3b, 0xd3, 0x99, 0xe8, 0xf7, 0xc7, 0xbb, 0x33, 0x3c, 0xc3,
+	0x3c, 0xd5, 0x6a, 0x85, 0x4e, 0xc1, 0xc9, 0xe3, 0x40, 0xea, 0x5c, 0x2d, 0x23, 0xda, 0x20, 0x98,
+	0x22, 0xf9, 0xe7, 0x14, 0x18, 0x5a, 0xa5, 0xfa, 0x4d, 0xcd, 0x60, 0xff, 0xa6, 0x46, 0xbb, 0x16,
+	0x29, 0x79, 0xfa, 0x22, 0xdd, 0x01, 0x83, 0xbe, 0x5a, 0x2b, 0x4d, 0xc8, 0x10, 0xd7, 0x66, 0xfe,
+	0xd9, 0x41, 0xee, 0x52, 0xa7, 0x2e, 0x3f, 0x40, 0x3a, 0x54, 0x5b, 0x2b, 0x48, 0x0d, 0xa8, 0x73,
+	0x05, 0xa9, 0xe5, 0x73, 0x6a, 0xe8, 0x3e, 0x88, 0x1f, 0x77, 0xd7, 0xbd, 0xa3, 0xcb, 0xa9, 0x1e,
+	0x35, 0xdf, 0x45, 0xee, 0xc5, 0x37, 0x4f, 0xae, 0xe3, 0xa5, 0x70, 0x1d, 0x43, 0x25, 0x91, 0x25,
+	0x90, 0x69, 0x5f, 0xf3, 0x6b, 0x98, 0x04, 0xfd, 0xab, 0x54, 0xe7, 0xde, 0x90, 0x78, 0xb3, 0xdb,
+	0xd5, 0x12, 0xec, 0x14, 0x32, 0x51, 0x57, 0xab, 0xd7, 0x8b, 0xf5, 0x0f, 0x6a, 0x16, 0xb8, 0x10,
+	0xa9, 0xd3, 0x5f, 0x88, 0x37, 0x42, 0x44, 0x76, 0xe4, 0x69, 0x11, 0x79, 0x21, 0x4c, 0xa4, 0xcb,
+	0x8b, 0x3c, 0x0a, 0x46, 0x02, 0x3f, 0x3d, 0xfa, 0x7e, 0x4c, 0x82, 0x81, 0x55, 0xaa, 0xdf, 0xc6,
+	0xda, 0x7f, 0x9c, 0xc0, 0x1b, 0x20, 0x0d, 0x4d, 0xb2, 0x8d, 0x19, 0xe7, 0x6f, 0xcc, 0xe5, 0xcf,
+	0x7a, 0xa4, 0x03, 0x1d, 0xde, 0x08, 0xdd, 0x43, 0x7e, 0xa6, 0x78, 0xfd, 0x64, 0xe2, 0x32, 0x61,
+	0xe2, 0x7c, 0x46, 0xe4, 0x5f, 0x05, 0x30, 0x1a, 0x5a, 0x71, 0xd9, 0x13, 0xcb, 0xf6, 0x4d, 0x6c,
+	0xd4, 0x91, 0x25, 0xf3, 0x8a, 0x35, 0x77, 0xf0, 0x7e, 0x21, 0x75, 0xf4, 0xcd, 0x0d, 0x77, 0x28,
+	0x29, 0x0d, 0x58, 0xe1, 0x3d, 0xf8, 0x3d, 0x27, 0x38, 0x21, 0x9e, 0xf3, 0x2d, 0x58, 0x18, 0xf1,
+	0x23, 0x2f, 0xd1, 0xe4, 0x49, 0x89, 0x8e, 0xdb, 0x6f, 0xd1, 0x5e, 0x7e, 0xd0, 0x0f, 0x7d, 0x62,
+	0x56, 0x59, 0x98, 0x0d, 0xe5, 0x2e, 0xff, 0x99, 0x04, 0xe3, 0x56, 0x13, 0xb4, 0x9e, 0xff, 0xfa,
+	0x6d, 0x5c, 0x25, 0x58, 0x33, 0xb0, 0x1e, 0x78, 0x8d, 0xfe, 0x8f, 0x15, 0x17, 0xa7, 0xc0, 0xa0,
+	0x6a, 0xb5, 0x7d, 0xab, 0x30, 0x5b, 0xc8, 0xd0, 0xb7, 0x98, 0xdd, 0xc8, 0x52, 0xe5, 0x73, 0xee,
+	0xf2, 0xbb, 0xf6, 0x6a, 0xf1, 0x53, 0x57, 0x1a, 0xfb, 0xed, 0x44, 0x5e, 0xbd, 0x16, 0xad, 0x96,
+	0xa9, 0xb6, 0x77, 0x27, 0x8a, 0x5c, 0xf9, 0x3a, 0x98, 0x8c, 0xdb, 0x77, 0xa5, 0x54, 0x1c, 0xe9,
+	0xe2, 0x5e, 0x7e, 0x2a, 0x80, 0x41, 0x4b, 0x79, 0x0d, 0x0d, 0x32, 0xb4, 0x06, 0x9b, 0xd0, 0xa4,
+	0xe2, 0x35, 0xd0, 0x07, 0xb7, 0xd9, 0x16, 0x69, 0x1a, 0xac, 0x75, 0x62, 0x95, 0x7c, 0xa8, 0xb8,
+	0x04, 0xd2, 0x0d, 0xdb, 0x02, 0xd7, 0x55, 0x36, 0xaa, 0x01, 0x39, 0x7e, 0x42, 0x9c, 0x3a, 0x07,
+	0x8b, 0xef, 0x75, 0xc6, 0xb8, 0x68, 0x51, 0xe4, 0x7b, 0xb1, 0xa8, 0x99, 0x0c, 0x50, 0x73, 0xdf,
+	0x9b, 0x91, 0xdb, 0xd2, 0x90, 0x15, 0x70, 0xb1, 0x6d, 0x29, 0x8e, 0x8a, 0x45, 0xf9, 0x87, 0xa4,
+	0xdd, 0xc0, 0xca, 0x84, 0x41, 0x86, 0x96, 0x09, 0xa6, 0xce, 0xc4, 0xd1, 0x5d, 0x75, 0xc2, 0xe9,
+	0x55, 0xf7, 0x19, 0x00, 0x18, 0xdd, 0xab, 0xf0, 0x29, 0x28, 0x19, 0x33, 0x05, 0xbd, 0x16, 0x35,
+	0x05, 0xed, 0xef, 0xe5, 0x07, 0xf8, 0x3a, 0x1f, 0x8b, 0xfa, 0x30, 0xba, 0xb7, 0x66, 0x5b, 0x2c,
+	0x6e, 0x44, 0xca, 0x6d, 0x61, 0x2e, 0xfa, 0x79, 0xcc, 0x86, 0xe5, 0xd6, 0xce, 0x82, 0x3c, 0x0f,
+	0x2e, 0x75, 0x59, 0x8e, 0x61, 0x74, 0x61, 0x6e, 0xfe, 0x79, 0x1a, 0xa4, 0x56, 0xa9, 0x2e, 0x7e,
+	0x01, 0x06, 0xdb, 0xe7, 0xf4, 0x99, 0x28, 0x6d, 0x74, 0x0e, 0x53, 0xd2, 0x7c, 0xef, 0x58, 0xaf,
+	0x6f, 0xd6, 0xc0, 0x40, 0x78, 0xe8, 0x9a, 0x8e, 0x31, 0x12, 0x42, 0x4a, 0xb3, 0xbd, 0x22, 0x3d,
+	0x67, 0x77, 0xc1, 0x8b, 0xde, 0x74, 0x70, 0x39, 0xe6, 0xb4, 0x0b, 0x92, 0x5e, 0xef, 0x01, 0xe4,
+	0x59, 0xaf, 0x02, 0x10, 0x78, 0x3c, 0x5f, 0x8d, 0x39, 0xea, 0xc3, 0xa4, 0x7c, 0x4f, 0x30, 0xcf,
+	0xc7, 0x4f, 0x02, 0x18, 0x8b, 0x6e, 0xdf, 0x57, 0xe3, 0x0a, 0x10, 0x75, 0x4a, 0xba, 0x71, 0x9a,
+	0x53, 0xde, 0xd8, 0x30, 0xf2, 0xb8, 0xb3, 0x5b, 0x89, 0x5f, 0x82, 0x97, 0x42, 0x9d, 0x6a, 0x2a,
+	0x2e, 0xcb, 0x00, 0x50, 0x2a, 0xf4, 0x08, 0x8c, 0x73, 0xbf, 0x28, 0x7e, 0x27, 0x80, 0xa1, 0x8e,
+	0xf6, 0x10, 0x57, 0xcb, 0x76, 0xb0, 0x74, 0xe5, 0x6f, 0x80, 0x63, 0x62, 0x59, 0x98, 0x93, 0xce,
+	0x7c, 0x65, 0x35, 0xce, 0xd2, 0xb5, 0x47, 0x87, 0x59, 0xe1, 0xc9, 0x61, 0x56, 0x78, 0x7e, 0x98,
+	0x15, 0x1e, 0x1c, 0x65, 0x13, 0x4f, 0x8e, 0xb2, 0x89, 0xa7, 0x47, 0xd9, 0xc4, 0x27, 0xe3, 0xa1,
+	0x51, 0xda, 0x6f, 0x93, 0xac, 0xd5, 0x40, 0xb4, 0x9a, 0xb6, 0x1b, 0xcd, 0x95, 0xbf, 0x02, 0x00,
+	0x00, 0xff, 0xff, 0x93, 0xe5, 0xe2, 0x81, 0x2f, 0x11, 0x00, 0x00,
 }
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -840,9 +797,6 @@ type MsgClient interface {
 	// Delegate defines a method for performing a delegation of coins
 	// from a delegator to a validator.
 	Delegate(ctx context.Context, in *MsgDelegate, opts ...grpc.CallOption) (*MsgDelegateResponse, error)
-	// BeginRedelegate defines a method for performing a redelegation
-	// of coins from a delegator and source validator to a destination validator.
-	BeginRedelegate(ctx context.Context, in *MsgBeginRedelegate, opts ...grpc.CallOption) (*MsgBeginRedelegateResponse, error)
 	// Undelegate defines a method for performing an undelegation from a
 	// delegate and a validator.
 	Undelegate(ctx context.Context, in *MsgUndelegate, opts ...grpc.CallOption) (*MsgUndelegateResponse, error)
@@ -886,15 +840,6 @@ func (c *msgClient) EditValidator(ctx context.Context, in *MsgEditValidator, opt
 func (c *msgClient) Delegate(ctx context.Context, in *MsgDelegate, opts ...grpc.CallOption) (*MsgDelegateResponse, error) {
 	out := new(MsgDelegateResponse)
 	err := c.cc.Invoke(ctx, "/cosmos.staking.v1beta1.Msg/Delegate", in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *msgClient) BeginRedelegate(ctx context.Context, in *MsgBeginRedelegate, opts ...grpc.CallOption) (*MsgBeginRedelegateResponse, error) {
-	out := new(MsgBeginRedelegateResponse)
-	err := c.cc.Invoke(ctx, "/cosmos.staking.v1beta1.Msg/BeginRedelegate", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -946,9 +891,6 @@ type MsgServer interface {
 	// Delegate defines a method for performing a delegation of coins
 	// from a delegator to a validator.
 	Delegate(context.Context, *MsgDelegate) (*MsgDelegateResponse, error)
-	// BeginRedelegate defines a method for performing a redelegation
-	// of coins from a delegator and source validator to a destination validator.
-	BeginRedelegate(context.Context, *MsgBeginRedelegate) (*MsgBeginRedelegateResponse, error)
 	// Undelegate defines a method for performing an undelegation from a
 	// delegate and a validator.
 	Undelegate(context.Context, *MsgUndelegate) (*MsgUndelegateResponse, error)
@@ -975,9 +917,6 @@ func (*UnimplementedMsgServer) EditValidator(ctx context.Context, req *MsgEditVa
 }
 func (*UnimplementedMsgServer) Delegate(ctx context.Context, req *MsgDelegate) (*MsgDelegateResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Delegate not implemented")
-}
-func (*UnimplementedMsgServer) BeginRedelegate(ctx context.Context, req *MsgBeginRedelegate) (*MsgBeginRedelegateResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method BeginRedelegate not implemented")
 }
 func (*UnimplementedMsgServer) Undelegate(ctx context.Context, req *MsgUndelegate) (*MsgUndelegateResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Undelegate not implemented")
@@ -1046,24 +985,6 @@ func _Msg_Delegate_Handler(srv interface{}, ctx context.Context, dec func(interf
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(MsgServer).Delegate(ctx, req.(*MsgDelegate))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _Msg_BeginRedelegate_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(MsgBeginRedelegate)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(MsgServer).BeginRedelegate(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/cosmos.staking.v1beta1.Msg/BeginRedelegate",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(MsgServer).BeginRedelegate(ctx, req.(*MsgBeginRedelegate))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -1158,10 +1079,6 @@ var _Msg_serviceDesc = grpc.ServiceDesc{
 			Handler:    _Msg_Delegate_Handler,
 		},
 		{
-			MethodName: "BeginRedelegate",
-			Handler:    _Msg_BeginRedelegate_Handler,
-		},
-		{
 			MethodName: "Undelegate",
 			Handler:    _Msg_Undelegate_Handler,
 		},
@@ -1180,6 +1097,53 @@ var _Msg_serviceDesc = grpc.ServiceDesc{
 	},
 	Streams:  []grpc.StreamDesc{},
 	Metadata: "cosmos/staking/v1beta1/tx.proto",
+}
+
+func (m *Capital) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *Capital) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *Capital) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	{
+		size := m.NonSlashableCapital.Size()
+		i -= size
+		if _, err := m.NonSlashableCapital.MarshalTo(dAtA[i:]); err != nil {
+			return 0, err
+		}
+		i = encodeVarintTx(dAtA, i, uint64(size))
+	}
+	i--
+	dAtA[i] = 0x12
+	if len(m.SlashableBalance) > 0 {
+		for iNdEx := len(m.SlashableBalance) - 1; iNdEx >= 0; iNdEx-- {
+			{
+				size, err := m.SlashableBalance[iNdEx].MarshalToSizedBuffer(dAtA[:i])
+				if err != nil {
+					return 0, err
+				}
+				i -= size
+				i = encodeVarintTx(dAtA, i, uint64(size))
+			}
+			i--
+			dAtA[i] = 0xa
+		}
+	}
+	return len(dAtA) - i, nil
 }
 
 func (m *MsgCreateValidator) Marshal() (dAtA []byte, err error) {
@@ -1203,7 +1167,7 @@ func (m *MsgCreateValidator) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	var l int
 	_ = l
 	{
-		size, err := m.Value.MarshalToSizedBuffer(dAtA[:i])
+		size, err := m.Capital.MarshalToSizedBuffer(dAtA[:i])
 		if err != nil {
 			return 0, err
 		}
@@ -1402,7 +1366,7 @@ func (m *MsgDelegate) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	var l int
 	_ = l
 	{
-		size, err := m.Amount.MarshalToSizedBuffer(dAtA[:i])
+		size, err := m.Capital.MarshalToSizedBuffer(dAtA[:i])
 		if err != nil {
 			return 0, err
 		}
@@ -1448,91 +1412,6 @@ func (m *MsgDelegateResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	_ = i
 	var l int
 	_ = l
-	return len(dAtA) - i, nil
-}
-
-func (m *MsgBeginRedelegate) Marshal() (dAtA []byte, err error) {
-	size := m.Size()
-	dAtA = make([]byte, size)
-	n, err := m.MarshalToSizedBuffer(dAtA[:size])
-	if err != nil {
-		return nil, err
-	}
-	return dAtA[:n], nil
-}
-
-func (m *MsgBeginRedelegate) MarshalTo(dAtA []byte) (int, error) {
-	size := m.Size()
-	return m.MarshalToSizedBuffer(dAtA[:size])
-}
-
-func (m *MsgBeginRedelegate) MarshalToSizedBuffer(dAtA []byte) (int, error) {
-	i := len(dAtA)
-	_ = i
-	var l int
-	_ = l
-	{
-		size, err := m.Amount.MarshalToSizedBuffer(dAtA[:i])
-		if err != nil {
-			return 0, err
-		}
-		i -= size
-		i = encodeVarintTx(dAtA, i, uint64(size))
-	}
-	i--
-	dAtA[i] = 0x22
-	if len(m.ValidatorDstAddress) > 0 {
-		i -= len(m.ValidatorDstAddress)
-		copy(dAtA[i:], m.ValidatorDstAddress)
-		i = encodeVarintTx(dAtA, i, uint64(len(m.ValidatorDstAddress)))
-		i--
-		dAtA[i] = 0x1a
-	}
-	if len(m.ValidatorSrcAddress) > 0 {
-		i -= len(m.ValidatorSrcAddress)
-		copy(dAtA[i:], m.ValidatorSrcAddress)
-		i = encodeVarintTx(dAtA, i, uint64(len(m.ValidatorSrcAddress)))
-		i--
-		dAtA[i] = 0x12
-	}
-	if len(m.DelegatorAddress) > 0 {
-		i -= len(m.DelegatorAddress)
-		copy(dAtA[i:], m.DelegatorAddress)
-		i = encodeVarintTx(dAtA, i, uint64(len(m.DelegatorAddress)))
-		i--
-		dAtA[i] = 0xa
-	}
-	return len(dAtA) - i, nil
-}
-
-func (m *MsgBeginRedelegateResponse) Marshal() (dAtA []byte, err error) {
-	size := m.Size()
-	dAtA = make([]byte, size)
-	n, err := m.MarshalToSizedBuffer(dAtA[:size])
-	if err != nil {
-		return nil, err
-	}
-	return dAtA[:n], nil
-}
-
-func (m *MsgBeginRedelegateResponse) MarshalTo(dAtA []byte) (int, error) {
-	size := m.Size()
-	return m.MarshalToSizedBuffer(dAtA[:size])
-}
-
-func (m *MsgBeginRedelegateResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
-	i := len(dAtA)
-	_ = i
-	var l int
-	_ = l
-	n8, err8 := github_com_cosmos_gogoproto_types.StdTimeMarshalTo(m.CompletionTime, dAtA[i-github_com_cosmos_gogoproto_types.SizeOfStdTime(m.CompletionTime):])
-	if err8 != nil {
-		return 0, err8
-	}
-	i -= n8
-	i = encodeVarintTx(dAtA, i, uint64(n8))
-	i--
-	dAtA[i] = 0xa
 	return len(dAtA) - i, nil
 }
 
@@ -1613,12 +1492,12 @@ func (m *MsgUndelegateResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	}
 	i--
 	dAtA[i] = 0x12
-	n11, err11 := github_com_cosmos_gogoproto_types.StdTimeMarshalTo(m.CompletionTime, dAtA[i-github_com_cosmos_gogoproto_types.SizeOfStdTime(m.CompletionTime):])
-	if err11 != nil {
-		return 0, err11
+	n9, err9 := github_com_cosmos_gogoproto_types.StdTimeMarshalTo(m.CompletionTime, dAtA[i-github_com_cosmos_gogoproto_types.SizeOfStdTime(m.CompletionTime):])
+	if err9 != nil {
+		return 0, err9
 	}
-	i -= n11
-	i = encodeVarintTx(dAtA, i, uint64(n11))
+	i -= n9
+	i = encodeVarintTx(dAtA, i, uint64(n9))
 	i--
 	dAtA[i] = 0xa
 	return len(dAtA) - i, nil
@@ -1838,6 +1717,23 @@ func encodeVarintTx(dAtA []byte, offset int, v uint64) int {
 	dAtA[offset] = uint8(v)
 	return base
 }
+func (m *Capital) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	if len(m.SlashableBalance) > 0 {
+		for _, e := range m.SlashableBalance {
+			l = e.Size()
+			n += 1 + l + sovTx(uint64(l))
+		}
+	}
+	l = m.NonSlashableCapital.Size()
+	n += 1 + l + sovTx(uint64(l))
+	return n
+}
+
 func (m *MsgCreateValidator) Size() (n int) {
 	if m == nil {
 		return 0
@@ -1862,7 +1758,7 @@ func (m *MsgCreateValidator) Size() (n int) {
 		l = m.Pubkey.Size()
 		n += 1 + l + sovTx(uint64(l))
 	}
-	l = m.Value.Size()
+	l = m.Capital.Size()
 	n += 1 + l + sovTx(uint64(l))
 	return n
 }
@@ -1922,7 +1818,7 @@ func (m *MsgDelegate) Size() (n int) {
 	if l > 0 {
 		n += 1 + l + sovTx(uint64(l))
 	}
-	l = m.Amount.Size()
+	l = m.Capital.Size()
 	n += 1 + l + sovTx(uint64(l))
 	return n
 }
@@ -1933,40 +1829,6 @@ func (m *MsgDelegateResponse) Size() (n int) {
 	}
 	var l int
 	_ = l
-	return n
-}
-
-func (m *MsgBeginRedelegate) Size() (n int) {
-	if m == nil {
-		return 0
-	}
-	var l int
-	_ = l
-	l = len(m.DelegatorAddress)
-	if l > 0 {
-		n += 1 + l + sovTx(uint64(l))
-	}
-	l = len(m.ValidatorSrcAddress)
-	if l > 0 {
-		n += 1 + l + sovTx(uint64(l))
-	}
-	l = len(m.ValidatorDstAddress)
-	if l > 0 {
-		n += 1 + l + sovTx(uint64(l))
-	}
-	l = m.Amount.Size()
-	n += 1 + l + sovTx(uint64(l))
-	return n
-}
-
-func (m *MsgBeginRedelegateResponse) Size() (n int) {
-	if m == nil {
-		return 0
-	}
-	var l int
-	_ = l
-	l = github_com_cosmos_gogoproto_types.SizeOfStdTime(m.CompletionTime)
-	n += 1 + l + sovTx(uint64(l))
 	return n
 }
 
@@ -2088,6 +1950,124 @@ func sovTx(x uint64) (n int) {
 }
 func sozTx(x uint64) (n int) {
 	return sovTx(uint64((x << 1) ^ uint64((int64(x) >> 63))))
+}
+func (m *Capital) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowTx
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: Capital: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: Capital: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field SlashableBalance", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTx
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthTx
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLengthTx
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.SlashableBalance = append(m.SlashableBalance, TokenBalance{})
+			if err := m.SlashableBalance[len(m.SlashableBalance)-1].Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		case 2:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field NonSlashableCapital", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTx
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthTx
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthTx
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if err := m.NonSlashableCapital.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipTx(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthTx
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
 }
 func (m *MsgCreateValidator) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
@@ -2320,7 +2300,7 @@ func (m *MsgCreateValidator) Unmarshal(dAtA []byte) error {
 			iNdEx = postIndex
 		case 7:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Value", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field Capital", wireType)
 			}
 			var msglen int
 			for shift := uint(0); ; shift += 7 {
@@ -2347,7 +2327,7 @@ func (m *MsgCreateValidator) Unmarshal(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			if err := m.Value.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+			if err := m.Capital.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
 				return err
 			}
 			iNdEx = postIndex
@@ -2754,7 +2734,7 @@ func (m *MsgDelegate) Unmarshal(dAtA []byte) error {
 			iNdEx = postIndex
 		case 3:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Amount", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field Capital", wireType)
 			}
 			var msglen int
 			for shift := uint(0); ; shift += 7 {
@@ -2781,7 +2761,7 @@ func (m *MsgDelegate) Unmarshal(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			if err := m.Amount.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+			if err := m.Capital.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
 				return err
 			}
 			iNdEx = postIndex
@@ -2835,268 +2815,6 @@ func (m *MsgDelegateResponse) Unmarshal(dAtA []byte) error {
 			return fmt.Errorf("proto: MsgDelegateResponse: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
-		default:
-			iNdEx = preIndex
-			skippy, err := skipTx(dAtA[iNdEx:])
-			if err != nil {
-				return err
-			}
-			if (skippy < 0) || (iNdEx+skippy) < 0 {
-				return ErrInvalidLengthTx
-			}
-			if (iNdEx + skippy) > l {
-				return io.ErrUnexpectedEOF
-			}
-			iNdEx += skippy
-		}
-	}
-
-	if iNdEx > l {
-		return io.ErrUnexpectedEOF
-	}
-	return nil
-}
-func (m *MsgBeginRedelegate) Unmarshal(dAtA []byte) error {
-	l := len(dAtA)
-	iNdEx := 0
-	for iNdEx < l {
-		preIndex := iNdEx
-		var wire uint64
-		for shift := uint(0); ; shift += 7 {
-			if shift >= 64 {
-				return ErrIntOverflowTx
-			}
-			if iNdEx >= l {
-				return io.ErrUnexpectedEOF
-			}
-			b := dAtA[iNdEx]
-			iNdEx++
-			wire |= uint64(b&0x7F) << shift
-			if b < 0x80 {
-				break
-			}
-		}
-		fieldNum := int32(wire >> 3)
-		wireType := int(wire & 0x7)
-		if wireType == 4 {
-			return fmt.Errorf("proto: MsgBeginRedelegate: wiretype end group for non-group")
-		}
-		if fieldNum <= 0 {
-			return fmt.Errorf("proto: MsgBeginRedelegate: illegal tag %d (wire type %d)", fieldNum, wire)
-		}
-		switch fieldNum {
-		case 1:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field DelegatorAddress", wireType)
-			}
-			var stringLen uint64
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowTx
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				stringLen |= uint64(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			intStringLen := int(stringLen)
-			if intStringLen < 0 {
-				return ErrInvalidLengthTx
-			}
-			postIndex := iNdEx + intStringLen
-			if postIndex < 0 {
-				return ErrInvalidLengthTx
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.DelegatorAddress = string(dAtA[iNdEx:postIndex])
-			iNdEx = postIndex
-		case 2:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field ValidatorSrcAddress", wireType)
-			}
-			var stringLen uint64
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowTx
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				stringLen |= uint64(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			intStringLen := int(stringLen)
-			if intStringLen < 0 {
-				return ErrInvalidLengthTx
-			}
-			postIndex := iNdEx + intStringLen
-			if postIndex < 0 {
-				return ErrInvalidLengthTx
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.ValidatorSrcAddress = string(dAtA[iNdEx:postIndex])
-			iNdEx = postIndex
-		case 3:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field ValidatorDstAddress", wireType)
-			}
-			var stringLen uint64
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowTx
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				stringLen |= uint64(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			intStringLen := int(stringLen)
-			if intStringLen < 0 {
-				return ErrInvalidLengthTx
-			}
-			postIndex := iNdEx + intStringLen
-			if postIndex < 0 {
-				return ErrInvalidLengthTx
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.ValidatorDstAddress = string(dAtA[iNdEx:postIndex])
-			iNdEx = postIndex
-		case 4:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Amount", wireType)
-			}
-			var msglen int
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowTx
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				msglen |= int(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			if msglen < 0 {
-				return ErrInvalidLengthTx
-			}
-			postIndex := iNdEx + msglen
-			if postIndex < 0 {
-				return ErrInvalidLengthTx
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			if err := m.Amount.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
-				return err
-			}
-			iNdEx = postIndex
-		default:
-			iNdEx = preIndex
-			skippy, err := skipTx(dAtA[iNdEx:])
-			if err != nil {
-				return err
-			}
-			if (skippy < 0) || (iNdEx+skippy) < 0 {
-				return ErrInvalidLengthTx
-			}
-			if (iNdEx + skippy) > l {
-				return io.ErrUnexpectedEOF
-			}
-			iNdEx += skippy
-		}
-	}
-
-	if iNdEx > l {
-		return io.ErrUnexpectedEOF
-	}
-	return nil
-}
-func (m *MsgBeginRedelegateResponse) Unmarshal(dAtA []byte) error {
-	l := len(dAtA)
-	iNdEx := 0
-	for iNdEx < l {
-		preIndex := iNdEx
-		var wire uint64
-		for shift := uint(0); ; shift += 7 {
-			if shift >= 64 {
-				return ErrIntOverflowTx
-			}
-			if iNdEx >= l {
-				return io.ErrUnexpectedEOF
-			}
-			b := dAtA[iNdEx]
-			iNdEx++
-			wire |= uint64(b&0x7F) << shift
-			if b < 0x80 {
-				break
-			}
-		}
-		fieldNum := int32(wire >> 3)
-		wireType := int(wire & 0x7)
-		if wireType == 4 {
-			return fmt.Errorf("proto: MsgBeginRedelegateResponse: wiretype end group for non-group")
-		}
-		if fieldNum <= 0 {
-			return fmt.Errorf("proto: MsgBeginRedelegateResponse: illegal tag %d (wire type %d)", fieldNum, wire)
-		}
-		switch fieldNum {
-		case 1:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field CompletionTime", wireType)
-			}
-			var msglen int
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowTx
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				msglen |= int(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			if msglen < 0 {
-				return ErrInvalidLengthTx
-			}
-			postIndex := iNdEx + msglen
-			if postIndex < 0 {
-				return ErrInvalidLengthTx
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			if err := github_com_cosmos_gogoproto_types.StdTimeUnmarshal(&m.CompletionTime, dAtA[iNdEx:postIndex]); err != nil {
-				return err
-			}
-			iNdEx = postIndex
 		default:
 			iNdEx = preIndex
 			skippy, err := skipTx(dAtA[iNdEx:])

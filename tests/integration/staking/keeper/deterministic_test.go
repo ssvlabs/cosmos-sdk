@@ -278,7 +278,7 @@ func setValidator(t *testing.T, f *deterministicFixture, validator stakingtypes.
 	acc := f.accountKeeper.NewAccountWithAddress(f.ctx, delegatorAddress)
 	f.accountKeeper.SetAccount(f.ctx, acc)
 
-	_, err = f.stakingKeeper.Delegate(f.ctx, delegatorAddress, validator.BondedTokens(), stakingtypes.Unbonded, validator, true)
+	_, err = f.stakingKeeper.DelegateInternal(f.ctx, delegatorAddress, validator.BondedTokens(), stakingtypes.Unbonded, validator, true)
 	assert.NilError(t, err)
 }
 
@@ -379,7 +379,7 @@ func fundAccountAndDelegate(
 	assert.NilError(t, f.bankKeeper.MintCoins(f.ctx, minttypes.ModuleName, coins))
 	assert.NilError(t, banktestutil.FundAccount(f.ctx, f.bankKeeper, delegator, coins))
 
-	shares, err := f.stakingKeeper.Delegate(f.ctx, delegator, amt, stakingtypes.Unbonded, validator, true)
+	shares, err := f.stakingKeeper.DelegateInternal(f.ctx, delegator, amt, stakingtypes.Unbonded, validator, true)
 	return shares, err
 }
 

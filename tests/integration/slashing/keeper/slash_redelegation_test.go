@@ -79,16 +79,14 @@ func TestSlashRedelegation(t *testing.T) {
 	// creating evil val
 	evilValAddr := sdk.ValAddress(evilValPubKey.Address())
 	fundAccount(t, ctx, bankKeeper, authKeeper, sdk.AccAddress(evilValAddr), testCoin)
-	createValMsg1, _ := stakingtypes.NewMsgCreateValidator(
-		evilValAddr.String(), evilValPubKey, testCoin, stakingtypes.Description{Details: "test"}, stakingtypes.NewCommissionRates(math.LegacyNewDecWithPrec(5, 1), math.LegacyNewDecWithPrec(5, 1), math.LegacyNewDec(0)), math.OneInt())
+	createValMsg1, _ := stakingtypes.NewMsgCreateValidator(evilValAddr.String(), evilValPubKey, stakingtypes.Description{Details: "test"}, stakingtypes.NewCommissionRates(math.LegacyNewDecWithPrec(5, 1), math.LegacyNewDecWithPrec(5, 1), math.LegacyNewDec(0)), math.OneInt())
 	_, err = stakingMsgServer.CreateValidator(ctx, createValMsg1)
 	require.NoError(t, err)
 
 	// creating good val
 	goodValAddr := sdk.ValAddress(goodValPubKey.Address())
 	fundAccount(t, ctx, bankKeeper, authKeeper, sdk.AccAddress(goodValAddr), testCoin)
-	createValMsg2, _ := stakingtypes.NewMsgCreateValidator(
-		goodValAddr.String(), goodValPubKey, testCoin, stakingtypes.Description{Details: "test"}, stakingtypes.NewCommissionRates(math.LegacyNewDecWithPrec(5, 1), math.LegacyNewDecWithPrec(5, 1), math.LegacyNewDec(0)), math.OneInt())
+	createValMsg2, _ := stakingtypes.NewMsgCreateValidator(goodValAddr.String(), goodValPubKey, stakingtypes.Description{Details: "test"}, stakingtypes.NewCommissionRates(math.LegacyNewDecWithPrec(5, 1), math.LegacyNewDecWithPrec(5, 1), math.LegacyNewDec(0)), math.OneInt())
 	_, err = stakingMsgServer.CreateValidator(ctx, createValMsg2)
 	require.NoError(t, err)
 
@@ -237,16 +235,14 @@ func TestOverSlashing(t *testing.T) {
 	// create evil val
 	evilValAddr := sdk.ValAddress(evilValPubKey.Address())
 	fundAccount(t, ctx, bankKeeper, authKeeper, sdk.AccAddress(evilValAddr), testCoin)
-	createValMsg1, _ := stakingtypes.NewMsgCreateValidator(
-		evilValAddr.String(), evilValPubKey, testCoin, stakingtypes.Description{Details: "test"}, stakingtypes.NewCommissionRates(math.LegacyNewDecWithPrec(5, 1), math.LegacyNewDecWithPrec(5, 1), math.LegacyNewDec(0)), math.OneInt())
+	createValMsg1, _ := stakingtypes.NewMsgCreateValidator(evilValAddr.String(), evilValPubKey, stakingtypes.Description{Details: "test"}, stakingtypes.NewCommissionRates(math.LegacyNewDecWithPrec(5, 1), math.LegacyNewDecWithPrec(5, 1), math.LegacyNewDec(0)), math.OneInt())
 	_, err = stakingMsgServer.CreateValidator(ctx, createValMsg1)
 	require.NoError(t, err)
 
 	// create good val 1
 	goodValAddr := sdk.ValAddress(goodValPubKey.Address())
 	fundAccount(t, ctx, bankKeeper, authKeeper, sdk.AccAddress(goodValAddr), testCoin)
-	createValMsg2, _ := stakingtypes.NewMsgCreateValidator(
-		goodValAddr.String(), goodValPubKey, testCoin, stakingtypes.Description{Details: "test"}, stakingtypes.NewCommissionRates(math.LegacyNewDecWithPrec(5, 1), math.LegacyNewDecWithPrec(5, 1), math.LegacyNewDec(0)), math.OneInt())
+	createValMsg2, _ := stakingtypes.NewMsgCreateValidator(goodValAddr.String(), goodValPubKey, stakingtypes.Description{Details: "test"}, stakingtypes.NewCommissionRates(math.LegacyNewDecWithPrec(5, 1), math.LegacyNewDecWithPrec(5, 1), math.LegacyNewDec(0)), math.OneInt())
 	_, err = stakingMsgServer.CreateValidator(ctx, createValMsg2)
 	require.NoError(t, err)
 
@@ -388,13 +384,11 @@ func TestSlashRedelegation_ValidatorLeftWithNoTokens(t *testing.T) {
 	fundAccount(t, ctx, bankKeeper, authKeeper, sdk.AccAddress(dstAddr), testCoin)
 	fundAccount(t, ctx, bankKeeper, authKeeper, sdk.AccAddress(srcAddr), testCoin)
 
-	createValMsgDST, _ := stakingtypes.NewMsgCreateValidator(
-		dstAddr.String(), dstPubKey, testCoin, stakingtypes.Description{Details: "Validator DST"}, stakingtypes.NewCommissionRates(math.LegacyNewDecWithPrec(5, 1), math.LegacyNewDecWithPrec(5, 1), math.LegacyNewDec(0)), math.OneInt())
+	createValMsgDST, _ := stakingtypes.NewMsgCreateValidator(dstAddr.String(), dstPubKey, stakingtypes.Description{Details: "Validator DST"}, stakingtypes.NewCommissionRates(math.LegacyNewDecWithPrec(5, 1), math.LegacyNewDecWithPrec(5, 1), math.LegacyNewDec(0)), math.OneInt())
 	_, err = stakingMsgServer.CreateValidator(ctx, createValMsgDST)
 	require.NoError(t, err)
 
-	createValMsgSRC, _ := stakingtypes.NewMsgCreateValidator(
-		srcAddr.String(), srcPubKey, testCoin, stakingtypes.Description{Details: "Validator SRC"}, stakingtypes.NewCommissionRates(math.LegacyNewDecWithPrec(5, 1), math.LegacyNewDecWithPrec(5, 1), math.LegacyNewDec(0)), math.OneInt())
+	createValMsgSRC, _ := stakingtypes.NewMsgCreateValidator(srcAddr.String(), srcPubKey, stakingtypes.Description{Details: "Validator SRC"}, stakingtypes.NewCommissionRates(math.LegacyNewDecWithPrec(5, 1), math.LegacyNewDecWithPrec(5, 1), math.LegacyNewDec(0)), math.OneInt())
 	_, err = stakingMsgServer.CreateValidator(ctx, createValMsgSRC)
 	require.NoError(t, err)
 

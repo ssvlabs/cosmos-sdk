@@ -204,8 +204,7 @@ func TestRotateConsPubKey(t *testing.T) {
 		comm := types.NewCommissionRates(math.LegacyNewDec(0), math.LegacyNewDec(0), math.LegacyNewDec(0))
 		acc := f.accountKeeper.NewAccountWithAddress(ctx, sdk.AccAddress(valAddrs[i]))
 		f.accountKeeper.SetAccount(ctx, acc)
-		msg, err := types.NewMsgCreateValidator(valAddrs[i].String(), PKs[i], sdk.NewCoin(sdk.DefaultBondDenom, stakingKeeper.TokensFromConsensusPower(ctx, 30)),
-			types.Description{Moniker: "NewVal"}, comm, math.OneInt())
+		msg, err := types.NewMsgCreateValidator(valAddrs[i].String(), PKs[i], types.Description{Moniker: "NewVal"}, comm, math.OneInt())
 		assert.NilError(t, err)
 		_, err = msgServer.CreateValidator(ctx, msg)
 		assert.NilError(t, err)

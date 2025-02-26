@@ -278,7 +278,7 @@ func TestTallyDelgatorOverride(t *testing.T) {
 	val1, found := f.stakingKeeper.GetValidator(ctx, valAddrs[0])
 	assert.Assert(t, found)
 
-	_, err := f.stakingKeeper.Delegate(ctx, addrs[4], delTokens, stakingtypes.Unbonded, val1, true)
+	_, err := f.stakingKeeper.DelegateInternal(ctx, addrs[4], delTokens, stakingtypes.Unbonded, val1, true)
 	assert.NilError(t, err)
 
 	_, err = f.stakingKeeper.EndBlocker(ctx)
@@ -317,7 +317,7 @@ func TestTallyDelgatorInherit(t *testing.T) {
 	val3, found := f.stakingKeeper.GetValidator(ctx, vals[2])
 	assert.Assert(t, found)
 
-	_, err := f.stakingKeeper.Delegate(ctx, addrs[3], delTokens, stakingtypes.Unbonded, val3, true)
+	_, err := f.stakingKeeper.DelegateInternal(ctx, addrs[3], delTokens, stakingtypes.Unbonded, val3, true)
 	assert.NilError(t, err)
 
 	_, err = f.stakingKeeper.EndBlocker(ctx)
@@ -356,9 +356,9 @@ func TestTallyDelgatorMultipleOverride(t *testing.T) {
 	assert.Assert(t, found)
 	val2, found := f.stakingKeeper.GetValidator(ctx, vals[1])
 	assert.Assert(t, found)
-	_, err := f.stakingKeeper.Delegate(ctx, addrs[3], delTokens, stakingtypes.Unbonded, val1, true)
+	_, err := f.stakingKeeper.DelegateInternal(ctx, addrs[3], delTokens, stakingtypes.Unbonded, val1, true)
 	assert.NilError(t, err)
-	_, err = f.stakingKeeper.Delegate(ctx, addrs[3], delTokens, stakingtypes.Unbonded, val2, true)
+	_, err = f.stakingKeeper.DelegateInternal(ctx, addrs[3], delTokens, stakingtypes.Unbonded, val2, true)
 	assert.NilError(t, err)
 
 	_, err = f.stakingKeeper.EndBlocker(ctx)
@@ -401,9 +401,9 @@ func TestTallyDelgatorMultipleInherit(t *testing.T) {
 	val3, found := f.stakingKeeper.GetValidator(ctx, vals[2])
 	assert.Assert(t, found)
 
-	_, err := f.stakingKeeper.Delegate(ctx, addrs[3], delTokens, stakingtypes.Unbonded, val2, true)
+	_, err := f.stakingKeeper.DelegateInternal(ctx, addrs[3], delTokens, stakingtypes.Unbonded, val2, true)
 	assert.NilError(t, err)
-	_, err = f.stakingKeeper.Delegate(ctx, addrs[3], delTokens, stakingtypes.Unbonded, val3, true)
+	_, err = f.stakingKeeper.DelegateInternal(ctx, addrs[3], delTokens, stakingtypes.Unbonded, val3, true)
 	assert.NilError(t, err)
 
 	_, err = f.stakingKeeper.EndBlocker(ctx)
@@ -443,9 +443,9 @@ func TestTallyJailedValidator(t *testing.T) {
 	val3, found := f.stakingKeeper.GetValidator(ctx, valAddrs[2])
 	assert.Assert(t, found)
 
-	_, err := f.stakingKeeper.Delegate(ctx, addrs[3], delTokens, stakingtypes.Unbonded, val2, true)
+	_, err := f.stakingKeeper.DelegateInternal(ctx, addrs[3], delTokens, stakingtypes.Unbonded, val2, true)
 	assert.NilError(t, err)
-	_, err = f.stakingKeeper.Delegate(ctx, addrs[3], delTokens, stakingtypes.Unbonded, val3, true)
+	_, err = f.stakingKeeper.DelegateInternal(ctx, addrs[3], delTokens, stakingtypes.Unbonded, val3, true)
 	assert.NilError(t, err)
 
 	_, err = f.stakingKeeper.EndBlocker(ctx)
@@ -487,7 +487,7 @@ func TestTallyValidatorMultipleDelegations(t *testing.T) {
 	val2, found := f.stakingKeeper.GetValidator(ctx, valAddrs[1])
 	assert.Assert(t, found)
 
-	_, err := f.stakingKeeper.Delegate(ctx, addrs[0], delTokens, stakingtypes.Unbonded, val2, true)
+	_, err := f.stakingKeeper.DelegateInternal(ctx, addrs[0], delTokens, stakingtypes.Unbonded, val2, true)
 	assert.NilError(t, err)
 
 	tp := TestProposal

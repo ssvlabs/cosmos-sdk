@@ -189,9 +189,7 @@ func newBuildCreateValidatorMsg(clientCtx client.Context, txf tx.Factory, fs *fl
 	if err != nil {
 		return txf, nil, err
 	}
-	msg, err := types.NewMsgCreateValidator(
-		valStr, val.PubKey, val.Amount, description, val.CommissionRates, val.MinSelfDelegation,
-	)
+	msg, err := types.NewMsgCreateValidator(valStr, val.PubKey, description, val.CommissionRates, val.MinSelfDelegation)
 	if err != nil {
 		return txf, nil, err
 	}
@@ -404,14 +402,7 @@ func BuildCreateValidatorMsg(clientCtx client.Context, config TxCreateValidatorC
 		return txBldr, nil, err
 	}
 
-	msg, err := types.NewMsgCreateValidator(
-		valStr,
-		config.PubKey,
-		amount,
-		description,
-		commissionRates,
-		minSelfDelegation,
-	)
+	msg, err := types.NewMsgCreateValidator(valStr, config.PubKey, description, commissionRates, minSelfDelegation)
 	if err != nil {
 		return txBldr, msg, err
 	}

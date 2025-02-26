@@ -99,11 +99,11 @@ func createValidators(
 		f.accountKeeper.SetAccount(f.sdkCtx, acc)
 	}
 
-	_, err := f.stakingKeeper.Delegate(f.sdkCtx, addrs[0], f.stakingKeeper.TokensFromConsensusPower(f.sdkCtx, powers[0]), types.Unbonded, val1, true)
+	_, err := f.stakingKeeper.DelegateInternal(f.sdkCtx, addrs[0], f.stakingKeeper.TokensFromConsensusPower(f.sdkCtx, powers[0]), types.Unbonded, val1, true)
 	assert.NilError(t, err)
-	_, err = f.stakingKeeper.Delegate(f.sdkCtx, addrs[1], f.stakingKeeper.TokensFromConsensusPower(f.sdkCtx, powers[1]), types.Unbonded, val2, true)
+	_, err = f.stakingKeeper.DelegateInternal(f.sdkCtx, addrs[1], f.stakingKeeper.TokensFromConsensusPower(f.sdkCtx, powers[1]), types.Unbonded, val2, true)
 	assert.NilError(t, err)
-	_, err = f.stakingKeeper.Delegate(f.sdkCtx, addrs[0], f.stakingKeeper.TokensFromConsensusPower(f.sdkCtx, powers[2]), types.Unbonded, val2, true)
+	_, err = f.stakingKeeper.DelegateInternal(f.sdkCtx, addrs[0], f.stakingKeeper.TokensFromConsensusPower(f.sdkCtx, powers[2]), types.Unbonded, val2, true)
 	assert.NilError(t, err)
 	applyValidatorSetUpdates(t, f.sdkCtx, f.stakingKeeper, -1)
 

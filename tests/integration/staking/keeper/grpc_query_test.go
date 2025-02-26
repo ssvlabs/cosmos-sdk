@@ -739,7 +739,7 @@ func TestGRPCQueryRedelegations(t *testing.T) {
 	valAddrs := simtestutil.ConvertAddrsToValAddrs(addrs)
 	val1, val2, val3, val4 := vals[0], vals[1], valAddrs[3], valAddrs[4]
 	delAmount := f.stakingKeeper.TokensFromConsensusPower(ctx, 1)
-	_, err := f.stakingKeeper.Delegate(ctx, addrAcc1, delAmount, types.Unbonded, val1, true)
+	_, err := f.stakingKeeper.DelegateInternal(ctx, addrAcc1, delAmount, types.Unbonded, val1, true)
 	assert.NilError(t, err)
 	applyValidatorSetUpdates(t, ctx, f.stakingKeeper, -1)
 

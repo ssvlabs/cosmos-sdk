@@ -14,6 +14,15 @@ import "cometbft/abci/v1/types.proto";
 
 option go_package = "cosmossdk.io/x/staking/types";
 
+message TokenBalance {
+  string address = 1;
+  string amount  = 2 [
+    (cosmos_proto.scalar)  = "cosmos.Int",
+    (gogoproto.customtype) = "cosmossdk.io/math.Int",
+    (gogoproto.nullable)   = false
+  ];
+}
+
 // HistoricalInfo contains header and validator information for a given block.
 // It is stored as part of staking module's state, which persists the `n` most
 // recent HistoricalInfo

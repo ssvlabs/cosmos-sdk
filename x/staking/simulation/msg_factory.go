@@ -55,7 +55,7 @@ func MsgCreateValidatorFactory(k *keeper.Keeper) simsx.SimMsgFactoryFn[*types.Ms
 		)
 
 		addr := must(k.ValidatorAddressCodec().BytesToString(valOper.Address))
-		msg, err := types.NewMsgCreateValidator(addr, newPubKey, selfDelegation, description, commission, math.OneInt())
+		msg, err := types.NewMsgCreateValidator(addr, newPubKey, description, commission, math.OneInt())
 		if err != nil {
 			reporter.Skip(err.Error())
 			return nil, nil

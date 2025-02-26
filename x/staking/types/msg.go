@@ -20,16 +20,20 @@ var (
 	_ coretransaction.Msg                  = &MsgEditValidator{}
 	_ coretransaction.Msg                  = &MsgDelegate{}
 	_ coretransaction.Msg                  = &MsgUndelegate{}
-	_ coretransaction.Msg                  = &MsgBeginRedelegate{}
-	_ coretransaction.Msg                  = &MsgCancelUnbondingDelegation{}
-	_ coretransaction.Msg                  = &MsgUpdateParams{}
+	//_ coretransaction.Msg                  = &MsgBeginRedelegate{}
+	_ coretransaction.Msg = &MsgCancelUnbondingDelegation{}
+	_ coretransaction.Msg = &MsgUpdateParams{}
 )
 
 // NewMsgCreateValidator creates a new MsgCreateValidator instance.
 // Delegator address and validator address are the same.
 func NewMsgCreateValidator(
-	valAddr string, pubKey cryptotypes.PubKey,
-	selfDelegation sdk.Coin, description Description, commission CommissionRates, minSelfDelegation math.Int,
+	valAddr string,
+	pubKey cryptotypes.PubKey,
+	capital Capital,
+	description Description,
+	commission CommissionRates,
+	minSelfDelegation math.Int,
 ) (*MsgCreateValidator, error) {
 	var pkAny *codectypes.Any
 	if pubKey != nil {
@@ -42,9 +46,9 @@ func NewMsgCreateValidator(
 		Description:       description,
 		ValidatorAddress:  valAddr,
 		Pubkey:            pkAny,
-		Value:             selfDelegation,
 		Commission:        commission,
 		MinSelfDelegation: minSelfDelegation,
+		Capital:           capital,
 	}, nil
 }
 
@@ -60,8 +64,8 @@ func (msg MsgCreateValidator) Validate(ac address.Codec) error {
 		return ErrEmptyValidatorPubKey
 	}
 
-	if !msg.Value.IsValid() || !msg.Value.Amount.IsPositive() {
-		return errorsmod.Wrap(sdkerrors.ErrInvalidRequest, "invalid delegation amount")
+	if msg.NonSlashableCapital.IsZero() && len(msg.SlashableBalance) == 0 {
+		return errorsmod.Wrap(sdkerrors.ErrInvalidRequest, "both slashable and non-slashable capitals are zero")
 	}
 
 	if msg.Description == (Description{}) {
@@ -83,9 +87,9 @@ func (msg MsgCreateValidator) Validate(ac address.Codec) error {
 		)
 	}
 
-	if msg.Value.Amount.LT(msg.MinSelfDelegation) {
-		return ErrSelfDelegationBelowMinimum
-	}
+	//if msg.Value.Amount.LT(msg.MinSelfDelegation) {
+	//	return ErrSelfDelegationBelowMinimum
+	//}
 
 	return nil
 }
@@ -112,25 +116,25 @@ func NewMsgEditValidator(valAddr string, description Description, newRate *math.
 }
 
 // NewMsgDelegate creates a new MsgDelegate instance.
-func NewMsgDelegate(delAddr, valAddr string, amount sdk.Coin) *MsgDelegate {
+func NewMsgDelegate(delAddr, valAddr string, capital Capital) *MsgDelegate {
 	return &MsgDelegate{
 		DelegatorAddress: delAddr,
 		ValidatorAddress: valAddr,
-		Amount:           amount,
+		Capital:          capital,
 	}
 }
 
 // NewMsgBeginRedelegate creates a new MsgBeginRedelegate instance.
-func NewMsgBeginRedelegate(
-	delAddr, valSrcAddr, valDstAddr string, amount sdk.Coin,
-) *MsgBeginRedelegate {
-	return &MsgBeginRedelegate{
-		DelegatorAddress:    delAddr,
-		ValidatorSrcAddress: valSrcAddr,
-		ValidatorDstAddress: valDstAddr,
-		Amount:              amount,
-	}
-}
+//func NewMsgBeginRedelegate(
+//	delAddr, valSrcAddr, valDstAddr string, amount sdk.Coin,
+//) *MsgBeginRedelegate {
+//	return &MsgBeginRedelegate{
+//		DelegatorAddress:    delAddr,
+//		ValidatorSrcAddress: valSrcAddr,
+//		ValidatorDstAddress: valDstAddr,
+//		Amount:              amount,
+//	}
+//}
 
 // NewMsgUndelegate creates a new MsgUndelegate instance.
 func NewMsgUndelegate(delAddr, valAddr string, amount sdk.Coin) *MsgUndelegate {

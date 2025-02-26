@@ -38,7 +38,7 @@ func TestMsgDecode(t *testing.T) {
 	vAddr1, err := codectestutil.CodecOptions{}.GetValidatorCodec().BytesToString(valAddr1)
 	require.NoError(t, err)
 	commission1 := types.NewCommissionRates(math.LegacyZeroDec(), math.LegacyZeroDec(), math.LegacyZeroDec())
-	msg, err := types.NewMsgCreateValidator(vAddr1, pk1, coinPos, types.Description{}, commission1, math.OneInt())
+	msg, err := types.NewMsgCreateValidator(vAddr1, pk1, types.Description{}, commission1, math.OneInt())
 	require.NoError(t, err)
 	msgSerialized, err := cdc.MarshalInterface(msg)
 	require.NoError(t, err)
