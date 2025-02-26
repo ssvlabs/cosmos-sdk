@@ -698,12 +698,14 @@ func (app *BaseApp) cacheTxContext(ctx sdk.Context, txBytes []byte) (sdk.Context
 	return ctx.WithMultiStore(msCache), msCache
 }
 
-func (app *BaseApp) preBlock(req *abci.FinalizeBlockRequest) ([]abci.Event, error) {
+func (app *BaseApp) preBlock(req *abci.FinalizeBlockRequest) (*abci.ExecTxResult, []abci.Event, error) {
 	var events []abci.Event
+	var resp *abci.ExecTxResult
+	var err error
 	if app.preBlocker != nil {
 		ctx := app.finalizeBlockState.Context().WithEventManager(sdk.NewEventManager())
-		if err := app.preBlocker(ctx, req); err != nil {
-			return nil, err
+		if resp, err = app.preBlocker(ctx, req); err != nil {
+			return resp, nil, err
 		}
 		// ConsensusParams can change in preblocker, so we need to
 		// write the consensus parameters in store to context
@@ -723,7 +725,7 @@ func (app *BaseApp) preBlock(req *abci.FinalizeBlockRequest) ([]abci.Event, erro
 			)
 		}
 	}
-	return events, nil
+	return resp, events, nil
 }
 
 func (app *BaseApp) beginBlock(_ *abci.FinalizeBlockRequest) (sdk.BeginBlock, error) {

@@ -41,7 +41,7 @@ type VerifyVoteExtensionHandler func(Context, *abci.VerifyVoteExtensionRequest) 
 // persist their results in state.
 //
 // Note: returning an error will make FinalizeBlock fail.
-type PreBlocker func(Context, *abci.FinalizeBlockRequest) error
+type PreBlocker func(Context, *abci.FinalizeBlockRequest) (*abci.ExecTxResult, error)
 
 // BeginBlocker defines a function type alias for executing application
 // business logic before transactions are executed.

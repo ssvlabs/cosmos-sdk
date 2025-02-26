@@ -176,11 +176,11 @@ func (a *App) Close() error {
 }
 
 // PreBlocker application updates every pre block
-func (a *App) PreBlocker(ctx sdk.Context, _ *abci.FinalizeBlockRequest) error {
+func (a *App) PreBlocker(ctx sdk.Context, _ *abci.FinalizeBlockRequest) (*abci.ExecTxResult, error) {
 	if a.UnorderedTxManager != nil {
 		a.UnorderedTxManager.OnNewBlock(ctx.BlockTime())
 	}
-	return a.ModuleManager.PreBlock(ctx)
+	return nil, a.ModuleManager.PreBlock(ctx)
 }
 
 // BeginBlocker application updates every begin block

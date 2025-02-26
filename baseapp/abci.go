@@ -810,11 +810,15 @@ func (app *BaseApp) internalFinalizeBlock(ctx context.Context, req *abci.Finaliz
 			WithHeaderHash(req.Hash))
 	}
 
-	preblockEvents, err := app.preBlock(req)
+	txResults := make([]*abci.ExecTxResult, 0, len(req.Txs))
+	txResp, preblockEvents, err := app.preBlock(req)
 	if err != nil {
 		return nil, err
 	}
 	events = append(events, preblockEvents...)
+	if txResp != nil {
+		txResults = append(txResults, txResp)
+	}
 
 	beginBlock, err := app.beginBlock(req)
 	if err != nil {
@@ -841,7 +845,6 @@ func (app *BaseApp) internalFinalizeBlock(ctx context.Context, req *abci.Finaliz
 	//
 	// NOTE: Not all raw transactions may adhere to the sdk.Tx interface, e.g.
 	// vote extensions, so skip those.
-	txResults := make([]*abci.ExecTxResult, 0, len(req.Txs))
 	for txIndex, rawTx := range req.Txs {
 
 		response := app.deliverTx(rawTx)
