@@ -26,8 +26,6 @@ cosmossdk.io/store v1.10.0-rc.1.0.20241218084712-ca559989da43 h1:glZ6MpmD+5AhwJY
 cosmossdk.io/store v1.10.0-rc.1.0.20241218084712-ca559989da43/go.mod h1:XCWpgfueHSBY+B7Cf2Aq/CcsU+6XoFH+EmseCKglFrU=
 cosmossdk.io/x/bank v0.2.0-rc.1 h1:tLYxL2N0U19tU50euZZKdsixsQcU6V+eMfudn/Y7YyY=
 cosmossdk.io/x/bank v0.2.0-rc.1/go.mod h1:y1HipKOoiieb2gEZOQJPGwbwUBSYbIY+vG7XZAUstAE=
-cosmossdk.io/x/staking v0.2.0-rc.1 h1:AZRGddRuuTaLxxpBvC7/TR7Dmt0pjziXWk13dC1beIo=
-cosmossdk.io/x/staking v0.2.0-rc.1/go.mod h1:7K4hgQ6tn0XLFb2BJ9oe8nEc4RkfQ4qHqgQy2b0kVNc=
 cosmossdk.io/x/tx v1.0.1 h1:PomaVlERYWxhki9RKX+uTE30eJkyqIQjxc7kw1DPXUk=
 cosmossdk.io/x/tx v1.0.1/go.mod h1:dwOSom2k2BJuGgnm9YXBeFII9gbHJGN/BHZBVCbZvPg=
 filippo.io/edwards25519 v1.1.0 h1:FNf4tywRC1HmFuKW5xopWpigGjJKiJSV0Cqo0cJWDaA=

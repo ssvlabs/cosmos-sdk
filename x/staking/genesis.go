@@ -85,9 +85,9 @@ func validateGenesisStateValidators(validators []types.Validator) error {
 			return fmt.Errorf("validator is bonded and jailed in genesis state: moniker %v, address %v", val.Description.Moniker, consAddr)
 		}
 
-		if val.DelegatorShares.IsZero() && !val.IsUnbonding() {
-			return fmt.Errorf("bonded/unbonded genesis validator cannot have zero delegator shares, validator: %v", val)
-		}
+		//if val.DelegatorShares.IsZero() && !val.IsUnbonding() {
+		//	return fmt.Errorf("bonded/unbonded genesis validator cannot have zero delegator shares, validator: %v", val)
+		//}
 
 		addrMap[strKey] = true
 	}

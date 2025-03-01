@@ -80,20 +80,20 @@ func RandomizedGenState(simState *module.SimulationState) {
 		}
 		valAddrs[i] = valAddr
 
-		maxCommission := sdkmath.LegacyNewDecWithPrec(int64(simulation.RandIntBetween(simState.Rand, 1, 100)), 2)
-		commission := types.NewCommission(
-			simulation.RandomDecAmount(simState.Rand, maxCommission),
-			maxCommission,
-			simulation.RandomDecAmount(simState.Rand, maxCommission),
-		)
+		//maxCommission := sdkmath.LegacyNewDecWithPrec(int64(simulation.RandIntBetween(simState.Rand, 1, 100)), 2)
+		//commission := types.NewCommission(
+		//	simulation.RandomDecAmount(simState.Rand, maxCommission),
+		//	maxCommission,
+		//	simulation.RandomDecAmount(simState.Rand, maxCommission),
+		//)
 
-		validator, err := types.NewValidator(ValStrAddress, simState.Accounts[i].ConsKey.PubKey(), types.Description{})
-		if err != nil {
-			panic(err)
-		}
-		validator.Tokens = simState.InitialStake
-		validator.DelegatorShares = sdkmath.LegacyNewDecFromInt(simState.InitialStake)
-		validator.Commission = commission
+		//validator, err := types.NewValidator(ValStrAddress, simState.Accounts[i].ConsKey.PubKey(), types.Description{})
+		//if err != nil {
+		//	panic(err)
+		//}
+		//validator.Tokens = simState.InitialStake
+		//validator.DelegatorShares = sdkmath.LegacyNewDecFromInt(simState.InitialStake)
+		//validator.Commission = commission
 
 		accAddress, err := simState.AddressCodec.BytesToString(simState.Accounts[i].Address)
 		if err != nil {
@@ -101,7 +101,7 @@ func RandomizedGenState(simState *module.SimulationState) {
 		}
 		delegation := types.NewDelegation(accAddress, ValStrAddress, sdkmath.LegacyNewDecFromInt(simState.InitialStake))
 
-		validators = append(validators, validator)
+		//validators = append(validators, validator)
 		delegations = append(delegations, delegation)
 	}
 

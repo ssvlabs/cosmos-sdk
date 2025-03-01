@@ -86,15 +86,15 @@ func (a StakeAuthorization) Accept(ctx context.Context, msg sdk.Msg) (authz.Acce
 	)
 
 	switch msg := msg.(type) {
-	case *MsgDelegate:
-		validatorAddress = msg.ValidatorAddress
-		amount = msg.Amount
-	case *MsgUndelegate:
-		validatorAddress = msg.ValidatorAddress
-		amount = msg.Amount
-	case *MsgBeginRedelegate:
-		validatorAddress = msg.ValidatorDstAddress
-		amount = msg.Amount
+	//case *MsgDelegate:
+	//	validatorAddress = msg.ValidatorAddress
+	//	amount = msg.Amount
+	//case *MsgUndelegate:
+	//	validatorAddress = msg.ValidatorAddress
+	//	amount = msg.Amount
+	//case *MsgBeginRedelegate:
+	//	validatorAddress = msg.ValidatorDstAddress
+	//	amount = msg.Amount
 	case *MsgCancelUnbondingDelegation:
 		validatorAddress = msg.ValidatorAddress
 		amount = msg.Amount
@@ -215,8 +215,8 @@ func normalizeAuthzType(authzType AuthorizationType) (string, error) {
 		return sdk.MsgTypeURL(&MsgDelegate{}), nil
 	case AuthorizationType_AUTHORIZATION_TYPE_UNDELEGATE:
 		return sdk.MsgTypeURL(&MsgUndelegate{}), nil
-	case AuthorizationType_AUTHORIZATION_TYPE_REDELEGATE:
-		return sdk.MsgTypeURL(&MsgBeginRedelegate{}), nil
+	//case AuthorizationType_AUTHORIZATION_TYPE_REDELEGATE:
+	//	return sdk.MsgTypeURL(&MsgBeginRedelegate{}), nil
 	case AuthorizationType_AUTHORIZATION_TYPE_CANCEL_UNBONDING_DELEGATION:
 		return sdk.MsgTypeURL(&MsgCancelUnbondingDelegation{}), nil
 	default:

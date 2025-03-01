@@ -61,37 +61,40 @@ func (k Keeper) IncrementValidatorPeriod(ctx context.Context, val sdk.ValidatorI
 
 	// calculate current ratio
 	var current sdk.DecCoins
-	if val.GetTokens().IsZero() {
 
-		// can't calculate ratio for zero-token validators
-		// ergo we instead add to the decimal pool
-		feePool, err := k.FeePool.Get(ctx)
-		if err != nil {
-			return 0, err
-		}
-
-		outstanding, err := k.ValidatorOutstandingRewards.Get(ctx, valBz)
-		if err != nil && !errors.Is(err, collections.ErrNotFound) {
-			return 0, err
-		}
-
-		feePool.DecimalPool = feePool.DecimalPool.Add(rewards.Rewards...)
-		outstanding.Rewards = outstanding.GetRewards().Sub(rewards.Rewards)
-		err = k.FeePool.Set(ctx, feePool)
-		if err != nil {
-			return 0, err
-		}
-
-		err = k.ValidatorOutstandingRewards.Set(ctx, valBz, outstanding)
-		if err != nil {
-			return 0, err
-		}
-
-		current = sdk.DecCoins{}
-	} else {
-		// note: necessary to truncate so we don't allow withdrawing more rewards than owed
-		current = rewards.Rewards.QuoDecTruncate(math.LegacyNewDecFromInt(val.GetTokens()))
-	}
+	// TODO: implement
+	//if val.GetTokens().IsZero() {
+	//
+	//	can't calculate ratio for zero-token validators
+	//	ergo we instead add to the decimal pool
+	//feePool, err := k.FeePool.Get(ctx)
+	//if err != nil {
+	//	return 0, err
+	//}
+	//
+	//outstanding, err := k.ValidatorOutstandingRewards.Get(ctx, valBz)
+	//if err != nil && !errors.Is(err, collections.ErrNotFound) {
+	//	return 0, err
+	//}
+	//
+	//feePool.DecimalPool = feePool.DecimalPool.Add(rewards.Rewards...)
+	//outstanding.Rewards = outstanding.GetRewards().Sub(rewards.Rewards)
+	//err = k.FeePool.Set(ctx, feePool)
+	//if err != nil {
+	//	return 0, err
+	//}
+	//
+	//err = k.ValidatorOutstandingRewards.Set(ctx, valBz, outstanding)
+	//if err != nil {
+	//	return 0, err
+	//}
+	//
+	//current = sdk.DecCoins{}
+	//} else {
+	//	note: necessary to truncate so we don't allow withdrawing more rewards than owed
+	//	TODO: implement
+	//current = rewards.Rewards.QuoDecTruncate(math.LegacyNewDecFromInt(val.GetTokens()))
+	//}
 
 	// fetch historical rewards for last period
 	historical, err := k.ValidatorHistoricalRewards.Get(ctx, collections.Join(sdk.ValAddress(valBz), rewards.Period-1))

@@ -106,7 +106,9 @@ func GetValidatorsByPowerIndexKey(validator Validator, powerReduction math.Int, 
 	// NOTE the address doesn't need to be stored because counter bytes must always be different
 	// NOTE the larger values are of higher value
 
-	consensusPower := sdk.TokensToConsensusPower(validator.Tokens, powerReduction)
+	//consensusPower := sdk.TokensToConsensusPower(validator.Tokens, powerReduction)
+	consensusPower := validator.ConsensusPower(powerReduction)
+
 	consensusPowerBytes := make([]byte, 8)
 	binary.BigEndian.PutUint64(consensusPowerBytes, uint64(consensusPower))
 

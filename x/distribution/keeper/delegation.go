@@ -28,21 +28,27 @@ func (k Keeper) initializeDelegation(ctx context.Context, val sdk.ValAddress, de
 		return err
 	}
 
-	validator, err := k.stakingKeeper.Validator(ctx, val)
-	if err != nil {
-		return err
-	}
-
-	delegation, err := k.stakingKeeper.Delegation(ctx, del, val)
-	if err != nil {
-		return err
-	}
+	//validator, err := k.stakingKeeper.Validator(ctx, val)
+	//if err != nil {
+	//	return err
+	//}
+	//
+	//delegation, err := k.stakingKeeper.Delegation(ctx, del, val)
+	//if err != nil {
+	//	return err
+	//}
 
 	// calculate delegation stake in tokens
 	// we don't store directly, so multiply delegation shares * (tokens per share)
 	// note: necessary to truncate so we don't allow withdrawing more rewards than owed
-	stake := validator.TokensFromSharesTruncated(delegation.GetShares())
+	//stake := validator.TokensFromSharesTruncated(delegation.GetShares())
 	headerinfo := k.HeaderService.HeaderInfo(ctx)
+
+	//capital := validator.GetCapital()
+
+	// TODO: implement when spec team starts reward distribution
+	stake := math.LegacyZeroDec()
+
 	return k.DelegatorStartingInfo.Set(ctx, collections.Join(val, del), types.NewDelegatorStartingInfo(previousPeriod, stake, uint64(headerinfo.Height)))
 }
 
@@ -156,7 +162,10 @@ func (k Keeper) CalculateDelegationRewards(ctx context.Context, val sdk.Validato
 	// equal to current stake here. We cannot use Equals because stake is truncated
 	// when multiplied by slash fractions (see above). We could only use equals if
 	// we had arbitrary-precision rationals.
-	currentStake := val.TokensFromShares(del.GetShares())
+	//currentStake := val.TokensFromShares(del.GetShares())
+
+	// TODO: implement when spec team starts reward distribution
+	currentStake := math.LegacyZeroDec()
 
 	if stake.GT(currentStake) {
 		// AccountI for rounding inconsistencies between:

@@ -465,7 +465,7 @@ func (s *KeeperTestSuite) TestUndelegateSelfDelegationBelowMinSelfDelegation() {
 
 	val0AccAddr := sdk.AccAddress(valAddrs[0].Bytes())
 	s.bankKeeper.EXPECT().SendCoinsFromModuleToModule(gomock.Any(), stakingtypes.BondedPoolName, stakingtypes.NotBondedPoolName, gomock.Any())
-	_, _, err := keeper.Undelegate(ctx, val0AccAddr, valAddrs[0], math.LegacyNewDecFromInt(keeper.TokensFromConsensusPower(ctx, 6)))
+	_, _, err := keeper.UndelegateInternal(ctx, val0AccAddr, valAddrs[0], math.LegacyNewDecFromInt(keeper.TokensFromConsensusPower(ctx, 6)))
 	require.NoError(err)
 
 	// end block
@@ -520,7 +520,7 @@ func (s *KeeperTestSuite) TestUndelegateFromUnbondingValidator() {
 	// unbond the all self-delegation to put validator in unbonding state
 	val0AccAddr := sdk.AccAddress(addrVals[0])
 	s.bankKeeper.EXPECT().SendCoinsFromModuleToModule(gomock.Any(), stakingtypes.BondedPoolName, stakingtypes.NotBondedPoolName, gomock.Any())
-	_, amount, err := keeper.Undelegate(ctx, val0AccAddr, addrVals[0], math.LegacyNewDecFromInt(delTokens))
+	_, amount, err := keeper.UndelegateInternal(ctx, val0AccAddr, addrVals[0], math.LegacyNewDecFromInt(delTokens))
 	require.NoError(err)
 	require.Equal(amount, delTokens)
 
@@ -542,7 +542,7 @@ func (s *KeeperTestSuite) TestUndelegateFromUnbondingValidator() {
 
 	// unbond some of the other delegation's shares
 	undelegateAmount := math.LegacyNewDec(6)
-	_, undelegatedAmount, err := keeper.Undelegate(ctx, addrDels[1], addrVals[0], undelegateAmount)
+	_, undelegatedAmount, err := keeper.UndelegateInternal(ctx, addrDels[1], addrVals[0], undelegateAmount)
 	require.NoError(err)
 	require.Equal(math.LegacyNewDecFromInt(undelegatedAmount), undelegateAmount)
 
@@ -595,7 +595,7 @@ func (s *KeeperTestSuite) TestUndelegateFromUnbondedValidator() {
 
 	// unbond the all self-delegation to put validator in unbonding state
 	s.bankKeeper.EXPECT().SendCoinsFromModuleToModule(gomock.Any(), stakingtypes.BondedPoolName, stakingtypes.NotBondedPoolName, gomock.Any())
-	_, amount, err := keeper.Undelegate(ctx, val0AccAddr, addrVals[0], math.LegacyNewDecFromInt(valTokens))
+	_, amount, err := keeper.UndelegateInternal(ctx, val0AccAddr, addrVals[0], math.LegacyNewDecFromInt(valTokens))
 	require.NoError(err)
 	require.Equal(amount, valTokens)
 
@@ -622,13 +622,13 @@ func (s *KeeperTestSuite) TestUndelegateFromUnbondedValidator() {
 
 	// unbond some of the other delegation's shares
 	unbondTokens := keeper.TokensFromConsensusPower(ctx, 6)
-	_, amount2, err := keeper.Undelegate(ctx, addrDels[1], addrVals[0], math.LegacyNewDecFromInt(unbondTokens))
+	_, amount2, err := keeper.UndelegateInternal(ctx, addrDels[1], addrVals[0], math.LegacyNewDecFromInt(unbondTokens))
 	require.NoError(err)
 	require.Equal(amount2, unbondTokens)
 
 	// unbond rest of the other delegation's shares
 	remainingTokens := delTokens.Sub(unbondTokens)
-	_, amount3, err := keeper.Undelegate(ctx, addrDels[1], addrVals[0], math.LegacyNewDecFromInt(remainingTokens))
+	_, amount3, err := keeper.UndelegateInternal(ctx, addrDels[1], addrVals[0], math.LegacyNewDecFromInt(remainingTokens))
 	require.NoError(err)
 	require.Equal(amount3, remainingTokens)
 
@@ -678,7 +678,7 @@ func (s *KeeperTestSuite) TestUnbondingAllDelegationFromValidator() {
 
 	// unbond the all self-delegation to put validator in unbonding state
 	s.bankKeeper.EXPECT().SendCoinsFromModuleToModule(gomock.Any(), stakingtypes.BondedPoolName, stakingtypes.NotBondedPoolName, gomock.Any())
-	_, amount, err := keeper.Undelegate(ctx, val0AccAddr, addrVals[0], math.LegacyNewDecFromInt(valTokens))
+	_, amount, err := keeper.UndelegateInternal(ctx, val0AccAddr, addrVals[0], math.LegacyNewDecFromInt(valTokens))
 	require.NoError(err)
 	require.Equal(amount, valTokens)
 
@@ -687,7 +687,7 @@ func (s *KeeperTestSuite) TestUnbondingAllDelegationFromValidator() {
 	s.applyValidatorSetUpdates(ctx, keeper, 1)
 
 	// unbond all the remaining delegation
-	_, amount2, err := keeper.Undelegate(ctx, addrDels[1], addrVals[0], math.LegacyNewDecFromInt(delTokens))
+	_, amount2, err := keeper.UndelegateInternal(ctx, addrDels[1], addrVals[0], math.LegacyNewDecFromInt(delTokens))
 	require.NoError(err)
 	require.Equal(amount2, delTokens)
 
@@ -984,7 +984,7 @@ func (s *KeeperTestSuite) TestRedelegateFromUnbondingValidator() {
 
 	// unbond the all self-delegation to put validator in unbonding state
 	s.bankKeeper.EXPECT().SendCoinsFromModuleToModule(gomock.Any(), stakingtypes.BondedPoolName, stakingtypes.NotBondedPoolName, gomock.Any())
-	_, amount, err := keeper.Undelegate(ctx, val0AccAddr, addrVals[0], math.LegacyNewDecFromInt(delTokens))
+	_, amount, err := keeper.UndelegateInternal(ctx, val0AccAddr, addrVals[0], math.LegacyNewDecFromInt(delTokens))
 	require.NoError(err)
 	require.Equal(amount, delTokens)
 
@@ -1062,7 +1062,7 @@ func (s *KeeperTestSuite) TestRedelegateFromUnbondedValidator() {
 
 	// unbond the all self-delegation to put validator in unbonding state
 	s.bankKeeper.EXPECT().SendCoinsFromModuleToModule(gomock.Any(), stakingtypes.BondedPoolName, stakingtypes.NotBondedPoolName, gomock.Any())
-	_, amount, err := keeper.Undelegate(ctx, val0AccAddr, valAddrs[0], math.LegacyNewDecFromInt(delTokens))
+	_, amount, err := keeper.UndelegateInternal(ctx, val0AccAddr, valAddrs[0], math.LegacyNewDecFromInt(delTokens))
 	require.NoError(err)
 	require.Equal(amount, delTokens)
 

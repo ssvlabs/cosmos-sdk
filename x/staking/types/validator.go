@@ -2,7 +2,7 @@ package types
 
 import (
 	"bytes"
-	"fmt"
+	"math/big"
 	"sort"
 	"strings"
 	"time"
@@ -40,19 +40,24 @@ var (
 var _ sdk.ValidatorI = Validator{}
 
 // NewValidator constructs a new Validator
-func NewValidator(operator string, pubKey cryptotypes.PubKey, description Description) (Validator, error) {
+func NewValidator(operator string, pubKey cryptotypes.PubKey, description Description, meta Meta) (Validator, error) {
 	pkAny, err := codectypes.NewAnyWithValue(pubKey)
 	if err != nil {
 		return Validator{}, err
 	}
 
 	return Validator{
-		OperatorAddress:         operator,
-		ConsensusPubkey:         pkAny,
-		Jailed:                  false,
-		Status:                  Unbonded,
-		Tokens:                  math.ZeroInt(),
-		DelegatorShares:         math.LegacyZeroDec(),
+		OperatorAddress: operator,
+		ConsensusPubkey: pkAny,
+		Jailed:          false,
+		Status:          Unbonded,
+		//Tokens:                  math.ZeroInt(),
+		//DelegatorShares:         math.LegacyZeroDec(),
+		Capital: Capital{
+			SlashableBalance:    make([]TokenBalance, 0),
+			NonSlashableCapital: math.ZeroInt(),
+		},
+		Meta:                    meta,
 		Description:             description,
 		UnbondingHeight:         int64(0),
 		UnbondingTime:           time.Unix(0, 0).UTC(),
@@ -306,68 +311,119 @@ func (v Validator) SetInitialCommission(commission Commission) (Validator, error
 // In some situations, the exchange rate becomes invalid, e.g. if
 // Validator loses all tokens due to slashing. In this case,
 // make all future delegations invalid.
-func (v Validator) InvalidExRate() bool {
-	return v.Tokens.IsZero() && v.DelegatorShares.IsPositive()
-}
+//func (v Validator) InvalidExRate() bool {
+//	return v.Tokens.IsZero() && v.DelegatorShares.IsPositive()
+//}
 
 // calculate the token worth of provided shares
-func (v Validator) TokensFromShares(shares math.LegacyDec) math.LegacyDec {
-	return (shares.MulInt(v.Tokens)).Quo(v.DelegatorShares)
-}
+//func (v Validator) TokensFromShares(shares math.LegacyDec) math.LegacyDec {
+//	return (shares.MulInt(v.Tokens)).Quo(v.DelegatorShares)
+//}
 
 // calculate the token worth of provided shares, truncated
-func (v Validator) TokensFromSharesTruncated(shares math.LegacyDec) math.LegacyDec {
-	return (shares.MulInt(v.Tokens)).QuoTruncate(v.DelegatorShares)
-}
+//func (v Validator) TokensFromSharesTruncated(shares math.LegacyDec) math.LegacyDec {
+//	return (shares.MulInt(v.Tokens)).QuoTruncate(v.DelegatorShares)
+//}
 
 // TokensFromSharesRoundUp returns the token worth of provided shares, rounded
 // up.
-func (v Validator) TokensFromSharesRoundUp(shares math.LegacyDec) math.LegacyDec {
-	return (shares.MulInt(v.Tokens)).QuoRoundUp(v.DelegatorShares)
-}
+//func (v Validator) TokensFromSharesRoundUp(shares math.LegacyDec) math.LegacyDec {
+//	return (shares.MulInt(v.Tokens)).QuoRoundUp(v.DelegatorShares)
+//}
 
 // SharesFromTokens returns the shares of a delegation given a bond amount. It
 // returns an error if the validator has no tokens.
-func (v Validator) SharesFromTokens(amt math.Int) (math.LegacyDec, error) {
-	if v.Tokens.IsZero() {
-		return math.LegacyZeroDec(), ErrInsufficientShares
-	}
-
-	return v.GetDelegatorShares().MulInt(amt).QuoInt(v.GetTokens()), nil
-}
+//func (v Validator) SharesFromTokens(amt math.Int) (math.LegacyDec, error) {
+//	if v.Tokens.IsZero() {
+//		return math.LegacyZeroDec(), ErrInsufficientShares
+//	}
+//
+//	return v.GetDelegatorShares().MulInt(amt).QuoInt(v.GetTokens()), nil
+//}
 
 // SharesFromTokensTruncated returns the truncated shares of a delegation given
 // a bond amount. It returns an error if the validator has no tokens.
-func (v Validator) SharesFromTokensTruncated(amt math.Int) (math.LegacyDec, error) {
-	if v.Tokens.IsZero() {
-		return math.LegacyZeroDec(), ErrInsufficientShares
-	}
-
-	return v.GetDelegatorShares().MulInt(amt).QuoTruncate(math.LegacyNewDecFromInt(v.GetTokens())), nil
-}
+//func (v Validator) SharesFromTokensTruncated(amt math.Int) (math.LegacyDec, error) {
+//	if v.Tokens.IsZero() {
+//		return math.LegacyZeroDec(), ErrInsufficientShares
+//	}
+//
+//	return v.GetDelegatorShares().MulInt(amt).QuoTruncate(math.LegacyNewDecFromInt(v.GetTokens())), nil
+//}
 
 // get the bonded tokens which the validator holds
-func (v Validator) BondedTokens() math.Int {
-	if v.IsBonded() {
-		return v.Tokens
-	}
-
-	return math.ZeroInt()
-}
+//func (v Validator) BondedTokens() math.Int {
+//	if v.IsBonded() {
+//		return v.Tokens
+//	}
+//
+//	return math.ZeroInt()
+//}
 
 // ConsensusPower gets the consensus-engine power. Aa reduction of 10^6 from
 // validator tokens is applied
-func (v Validator) ConsensusPower(r math.Int) int64 {
+//func (v Validator) ConsensusPower(r math.Int) int64 {
+//	if v.IsBonded() {
+//		return v.PotentialConsensusPower(r)
+//	}
+//
+//	return 0
+//}
+
+func (v Validator) ConsensusPower(powerReduction math.Int) int64 {
 	if v.IsBonded() {
-		return v.PotentialConsensusPower(r)
+		return v.PotentialConsensusPower(powerReduction)
 	}
 
 	return 0
 }
 
 // PotentialConsensusPower returns the potential consensus-engine power.
-func (v Validator) PotentialConsensusPower(r math.Int) int64 {
-	return sdk.TokensToConsensusPower(v.Tokens, r)
+func (v Validator) PotentialConsensusPower(powerReduction math.Int) int64 {
+	c := v.Capital
+	if len(c.SlashableBalance) == 0 {
+		return 0
+	}
+
+	// sum of inverses := sum(1 / amount)
+	sumInverse := new(big.Rat).SetInt64(0)
+	var count int64
+	for _, sb := range c.SlashableBalance {
+		if sb.Amount.IsPositive() {
+			// Invert the balance: 1 / sb.Amount
+			inv := new(big.Rat).SetInt(sb.Amount.BigInt())
+			inv.Inv(inv)
+			sumInverse.Add(sumInverse, inv)
+			count++
+		}
+	}
+
+	if count == 0 {
+		return 0
+	}
+
+	// harmonic mean := N / (sum of inverses)
+	n := big.NewRat(count, 1)
+	harmonicMean := new(big.Rat).Quo(n, sumInverse)
+
+	// divide by powerReduction
+	pr := new(big.Rat).SetInt(powerReduction.BigInt())
+	harmonicMean.Quo(harmonicMean, pr)
+
+	// convert the result to an int64 (floor).
+	num := harmonicMean.Num()
+	den := harmonicMean.Denom()
+
+	result := new(big.Int).Div(num, den)
+
+	//if !result.IsInt64() {
+	//	if result.Sign() > 0 {
+	//		return math.MaxInt64
+	//	}
+	//	return math.MinInt64
+	//}
+
+	return result.Int64()
 }
 
 // UpdateStatus updates the location of the shares within a validator
@@ -377,78 +433,96 @@ func (v Validator) UpdateStatus(newStatus BondStatus) Validator {
 	return v
 }
 
-// AddTokensFromDel adds tokens to a validator
-func (v Validator) AddTokensFromDel(amount math.Int) (Validator, math.LegacyDec) {
-	// calculate the shares to issue
-	var issuedShares math.LegacyDec
-	if v.DelegatorShares.IsZero() {
-		// the first delegation to a validator sets the exchange rate to one
-		issuedShares = math.LegacyNewDecFromInt(amount)
+func (v Validator) AddCapitalFromDel(capital Capital) Validator {
+	if v.Capital.IsZero() {
+		v.Capital = capital
 	} else {
-		shares, err := v.SharesFromTokens(amount)
-		if err != nil {
-			panic(err)
-		}
-
-		issuedShares = shares
+		v.Capital = v.Capital.Add(capital)
 	}
-
-	v.Tokens = v.Tokens.Add(amount)
-	v.DelegatorShares = v.DelegatorShares.Add(issuedShares)
-
-	return v, issuedShares
-}
-
-// RemoveTokens removes tokens from a validator
-func (v Validator) RemoveTokens(tokens math.Int) Validator {
-	if tokens.IsNegative() {
-		panic(fmt.Sprintf("should not happen: trying to remove negative tokens %v", tokens))
-	}
-
-	if v.Tokens.LT(tokens) {
-		panic(fmt.Sprintf("should not happen: only have %v tokens, trying to remove %v", v.Tokens, tokens))
-	}
-
-	v.Tokens = v.Tokens.Sub(tokens)
 
 	return v
 }
+
+func (v Validator) RemoveDelCapital(capital Capital) (Validator, error) {
+	if !v.Capital.HasEnoughFunds(capital) {
+		return v, errors.Wrapf(sdkerrors.ErrInvalidRequest, "validator capital has not enough balances to be removed")
+	}
+
+	v.Capital = v.Capital.Sub(capital)
+
+	return v, nil
+}
+
+// AddTokensFromDel adds tokens to a validator
+//func (v Validator) AddTokensFromDel(amount math.Int) (Validator, math.LegacyDec) {
+//	// calculate the shares to issue
+//	var issuedShares math.LegacyDec
+//	if v.DelegatorShares.IsZero() {
+//		// the first delegation to a validator sets the exchange rate to one
+//		issuedShares = math.LegacyNewDecFromInt(amount)
+//	} else {
+//		shares, err := v.SharesFromTokens(amount)
+//		if err != nil {
+//			panic(err)
+//		}
+//
+//		issuedShares = shares
+//	}
+//
+//	v.Tokens = v.Tokens.Add(amount)
+//	v.DelegatorShares = v.DelegatorShares.Add(issuedShares)
+//
+//	return v, issuedShares
+//}
+
+// RemoveTokens removes tokens from a validator
+//func (v Validator) RemoveTokens(tokens math.Int) Validator {
+//	if tokens.IsNegative() {
+//		panic(fmt.Sprintf("should not happen: trying to remove negative tokens %v", tokens))
+//	}
+//
+//	if v.Tokens.LT(tokens) {
+//		panic(fmt.Sprintf("should not happen: only have %v tokens, trying to remove %v", v.Tokens, tokens))
+//	}
+//
+//	v.Tokens = v.Tokens.Sub(tokens)
+//
+//	return v
+//}
 
 // RemoveDelShares removes delegator shares from a validator.
 // NOTE: because token fractions are left in the valiadator,
 //
 //	the exchange rate of future shares of this validator can increase.
-func (v Validator) RemoveDelShares(delShares math.LegacyDec) (Validator, math.Int) {
-	remainingShares := v.DelegatorShares.Sub(delShares)
-
-	var issuedTokens math.Int
-	if remainingShares.IsZero() {
-		// last delegation share gets any trimmings
-		issuedTokens = v.Tokens
-		v.Tokens = math.ZeroInt()
-	} else {
-		// leave excess tokens in the validator
-		// however fully use all the delegator shares
-		issuedTokens = v.TokensFromShares(delShares).TruncateInt()
-		v.Tokens = v.Tokens.Sub(issuedTokens)
-
-		if v.Tokens.IsNegative() {
-			panic("attempting to remove more tokens than available in validator")
-		}
-	}
-
-	v.DelegatorShares = remainingShares
-
-	return v, issuedTokens
-}
+//func (v Validator) RemoveDelShares(delShares math.LegacyDec) (Validator, math.Int) {
+//	remainingShares := v.DelegatorShares.Sub(delShares)
+//
+//	var issuedTokens math.Int
+//	if remainingShares.IsZero() {
+//		issuedTokens = v.Tokens
+//		v.Tokens = math.ZeroInt()
+//	} else {
+//		issuedTokens = v.TokensFromShares(delShares).TruncateInt()
+//		v.Tokens = v.Tokens.Sub(issuedTokens)
+//
+//		if v.Tokens.IsNegative() {
+//			panic("attempting to remove more tokens than available in validator")
+//		}
+//	}
+//
+//	v.DelegatorShares = remainingShares
+//
+//	return v, issuedTokens
+//}
 
 // MinEqual defines a more minimum set of equality conditions when comparing two
 // validators.
 func (v *Validator) MinEqual(other *Validator) bool {
 	return v.OperatorAddress == other.OperatorAddress &&
 		v.Status == other.Status &&
-		v.Tokens.Equal(other.Tokens) &&
-		v.DelegatorShares.Equal(other.DelegatorShares) &&
+		//v.Tokens.Equal(other.Tokens) &&
+		//v.DelegatorShares.Equal(other.DelegatorShares) &&
+		v.Capital.Equal(other.Capital) &&
 		v.Description.Equal(other.Description) &&
 		v.Commission.Equal(other.Commission) &&
 		v.Jailed == other.Jailed &&
@@ -490,14 +564,17 @@ func (v Validator) GetConsAddr() ([]byte, error) {
 	return pk.Address().Bytes(), nil
 }
 
-func (v Validator) GetTokens() math.Int       { return v.Tokens }
-func (v Validator) GetBondedTokens() math.Int { return v.BondedTokens() }
+// func (v Validator) GetTokens() math.Int       { return v.Tokens }
+func (v Validator) GetCapital() Capital { return v.Capital }
+
+// func (v Validator) GetBondedTokens() math.Int { return v.BondedTokens() }
 func (v Validator) GetConsensusPower(r math.Int) int64 {
 	return v.ConsensusPower(r)
 }
-func (v Validator) GetCommission() math.LegacyDec      { return v.Commission.Rate }
-func (v Validator) GetMinSelfDelegation() math.Int     { return v.MinSelfDelegation }
-func (v Validator) GetDelegatorShares() math.LegacyDec { return v.DelegatorShares }
+func (v Validator) GetCommission() math.LegacyDec  { return v.Commission.Rate }
+func (v Validator) GetMinSelfDelegation() math.Int { return v.MinSelfDelegation }
+
+//func (v Validator) GetDelegatorShares() math.LegacyDec { return v.DelegatorShares }
 
 // UnpackInterfaces implements UnpackInterfacesMessage.UnpackInterfaces
 func (v Validator) UnpackInterfaces(unpacker gogoprotoany.AnyUnpacker) error {

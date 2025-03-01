@@ -185,6 +185,8 @@ require (
 
 // Below are the long-lived replace of the Cosmos SDK
 replace (
+	cosmossdk.io/x/slashing => ./x/slashing
+	cosmossdk.io/x/staking => ./x/staking
 	// use cosmos fork of keyring
 	github.com/99designs/keyring => github.com/cosmos/keyring v1.2.0
 	// replace broken goleveldb

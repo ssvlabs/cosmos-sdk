@@ -73,16 +73,16 @@ func (k Keeper) InitGenesis(ctx context.Context, data *types.GenesisState) ([]ap
 			}
 		}
 
-		switch validator.GetStatus() {
-		case sdk.Bonded:
-			bondedTokens = bondedTokens.Add(validator.GetTokens())
-
-		case sdk.Unbonding, sdk.Unbonded:
-			notBondedTokens = notBondedTokens.Add(validator.GetTokens())
-
-		default:
-			return nil, fmt.Errorf("invalid validator status: %v", validator.GetStatus())
-		}
+		//switch validator.GetStatus() {
+		//case sdk.Bonded:
+		//	bondedTokens = bondedTokens.Add(validator.GetTokens())
+		//
+		//case sdk.Unbonding, sdk.Unbonded:
+		//	notBondedTokens = notBondedTokens.Add(validator.GetTokens())
+		//
+		//default:
+		//	return nil, fmt.Errorf("invalid validator status: %v", validator.GetStatus())
+		//}
 	}
 
 	for _, delegation := range data.Delegations {
@@ -277,15 +277,15 @@ func (k Keeper) ExportGenesis(ctx context.Context) (*types.GenesisState, error) 
 		return nil, err
 	}
 
-	var redelegations []types.Redelegation
-
-	err = k.IterateRedelegations(ctx, func(_ int64, red types.Redelegation) (stop bool) {
-		redelegations = append(redelegations, red)
-		return false
-	})
-	if err != nil {
-		return nil, err
-	}
+	//var redelegations []types.Redelegation
+	//
+	//err = k.IterateRedelegations(ctx, func(_ int64, red types.Redelegation) (stop bool) {
+	//	redelegations = append(redelegations, red)
+	//	return false
+	//})
+	//if err != nil {
+	//	return nil, err
+	//}
 
 	var lastValidatorPowers []types.LastValidatorPower
 
@@ -400,7 +400,7 @@ func (k Keeper) ExportGenesis(ctx context.Context) (*types.GenesisState, error) 
 		Validators:           allValidators,
 		Delegations:          allDelegations,
 		UnbondingDelegations: unbondingDelegations,
-		Redelegations:        redelegations,
+		//Redelegations:        redelegations,
 		Exported:             true,
 		RotationIndexRecords: rotationIndex,
 		RotationHistory:      conspubKeyRotationHistory,

@@ -1,18 +1,11 @@
 package keeper
 
 import (
-	"bytes"
 	"context"
-	"errors"
 	"fmt"
 	"slices"
-	"strconv"
 	"time"
 
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
-
-	"cosmossdk.io/collections"
 	"cosmossdk.io/core/event"
 	errorsmod "cosmossdk.io/errors"
 	"cosmossdk.io/math"
@@ -38,65 +31,65 @@ func NewMsgServerImpl(keeper *Keeper) types.MsgServer {
 
 // CreateValidator defines a method for creating a new validator.
 // The validator's params should not be nil for this function to execute successfully.
-func (k Keeper) CreateValidator(ctx context.Context, msg *types.MsgCreateValidator) (*types.MsgCreateValidatorResponse, error) {
+func (k Keeper) CreateValidator(ctx context.Context, msg *types.MsgCreateValidator) error {
 	valAddr, err := k.validatorAddressCodec.StringToBytes(msg.ValidatorAddress)
 	if err != nil {
-		return nil, sdkerrors.ErrInvalidAddress.Wrapf("invalid validator address: %s", err)
+		return sdkerrors.ErrInvalidAddress.Wrapf("invalid validator address: %s", err)
 	}
 
 	if err := msg.Validate(k.validatorAddressCodec); err != nil {
-		return nil, err
+		return err
 	}
 
 	minCommRate, err := k.MinCommissionRate(ctx)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	if msg.Commission.Rate.LT(minCommRate) {
-		return nil, errorsmod.Wrapf(types.ErrCommissionLTMinRate, "cannot set validator commission to less than minimum rate of %s", minCommRate)
+		return errorsmod.Wrapf(types.ErrCommissionLTMinRate, "cannot set validator commission to less than minimum rate of %s", minCommRate)
 	}
 
 	// check to see if the pubkey or sender has been registered before
 	if _, err := k.GetValidator(ctx, valAddr); err == nil {
-		return nil, types.ErrValidatorOwnerExists
+		return types.ErrValidatorOwnerExists
 	}
 
 	cv := msg.Pubkey.GetCachedValue()
 	if cv == nil {
-		return nil, errorsmod.Wrap(sdkerrors.ErrInvalidType, "Pubkey cached value is nil")
+		return errorsmod.Wrap(sdkerrors.ErrInvalidType, "Pubkey cached value is nil")
 	}
 
 	pk, ok := cv.(cryptotypes.PubKey)
 	if !ok {
-		return nil, errorsmod.Wrapf(sdkerrors.ErrInvalidType, "Expecting cryptotypes.PubKey, got %T", cv)
+		return errorsmod.Wrapf(sdkerrors.ErrInvalidType, "Expecting cryptotypes.PubKey, got %T", cv)
 	}
 
 	pubkeyTypes, err := k.consensusKeeper.ValidatorPubKeyTypes(ctx)
 	if err != nil {
-		return nil, errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "failed to query consensus params: %s", err)
+		return errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "failed to query consensus params: %s", err)
 	}
 
 	pkType := pk.Type()
 	if !slices.Contains(pubkeyTypes, pkType) {
-		return nil, errorsmod.Wrapf(
+		return errorsmod.Wrapf(
 			types.ErrValidatorPubKeyTypeNotSupported,
 			"got: %s, expected: %s", pk.Type(), pubkeyTypes,
 		)
 	}
 
 	if pubkeyTypes == nil {
-		return nil, errorsmod.Wrap(sdkerrors.ErrInvalidRequest, "validator params are not set")
+		return errorsmod.Wrap(sdkerrors.ErrInvalidRequest, "validator params are not set")
 	}
 
 	if err = validatePubKey(pk, pubkeyTypes); err != nil {
-		return nil, err
+		return err
 	}
 
-	err = k.checkConsKeyAlreadyUsed(ctx, pk)
-	if err != nil {
-		return nil, err
-	}
+	//err = k.checkConsKeyAlreadyUsed(ctx, pk)
+	//if err != nil {
+	//	return nil, err
+	//}
 
 	//bondDenom, err := k.BondDenom(ctx)
 	//if err != nil {
@@ -110,12 +103,12 @@ func (k Keeper) CreateValidator(ctx context.Context, msg *types.MsgCreateValidat
 	//}
 
 	if _, err := msg.Description.EnsureLength(); err != nil {
-		return nil, err
+		return err
 	}
 
-	validator, err := types.NewValidator(msg.ValidatorAddress, pk, msg.Description)
+	validator, err := types.NewValidator(msg.ValidatorAddress, pk, msg.Description, msg.Meta)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	commission := types.NewCommissionWithTime(
@@ -125,37 +118,37 @@ func (k Keeper) CreateValidator(ctx context.Context, msg *types.MsgCreateValidat
 
 	validator, err = validator.SetInitialCommission(commission)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	validator.MinSelfDelegation = msg.MinSelfDelegation
 
 	err = k.SetValidator(ctx, validator)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	err = k.SetValidatorByConsAddr(ctx, validator)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	err = k.SetNewValidatorByPowerIndex(ctx, validator)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	// call the after-creation hook
 	if err := k.Hooks().AfterValidatorCreated(ctx, valAddr); err != nil {
-		return nil, err
+		return err
 	}
 
 	// move coins from the msg.Address account to a (self-delegation) delegator account
 	// the validator account and global shares are updated within here
 	// NOTE source will always be from a wallet which are unbonded
-	_, err = k.DelegateInternal(ctx, valAddr, msg.Capital, types.Unbonded, validator, true)
+	err = k.DelegateInternal(ctx, valAddr, msg.Capital, types.Unbonded, validator)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	if err := k.EventService.EventManager(ctx).EmitKV(
@@ -163,10 +156,10 @@ func (k Keeper) CreateValidator(ctx context.Context, msg *types.MsgCreateValidat
 		event.NewAttribute(types.AttributeKeyValidator, msg.ValidatorAddress),
 		//event.NewAttribute(sdk.AttributeKeyAmount, msg.Value.String()),
 	); err != nil {
-		return nil, err
+		return err
 	}
 
-	return &types.MsgCreateValidatorResponse{}, nil
+	return nil
 }
 
 // EditValidator defines a method for editing an existing validator
@@ -235,9 +228,9 @@ func (k msgServer) EditValidator(ctx context.Context, msg *types.MsgEditValidato
 			return nil, types.ErrMinSelfDelegationDecreased
 		}
 
-		if msg.MinSelfDelegation.GT(validator.Tokens) {
-			return nil, types.ErrSelfDelegationBelowMinimum
-		}
+		//if msg.MinSelfDelegation.GT(validator.Tokens) {
+		//	return nil, types.ErrSelfDelegationBelowMinimum
+		//}
 
 		validator.MinSelfDelegation = *msg.MinSelfDelegation
 	}
@@ -259,15 +252,15 @@ func (k msgServer) EditValidator(ctx context.Context, msg *types.MsgEditValidato
 }
 
 // Delegate defines a method for performing a delegation of coins from a delegator to a validator
-func (k Keeper) Delegate(ctx context.Context, msg *types.MsgDelegate) (*types.MsgDelegateResponse, error) {
+func (k Keeper) Delegate(ctx context.Context, msg *types.MsgDelegate) error {
 	valAddr, valErr := k.validatorAddressCodec.StringToBytes(msg.ValidatorAddress)
 	if valErr != nil {
-		return nil, sdkerrors.ErrInvalidAddress.Wrapf("invalid validator address: %s", valErr)
+		return sdkerrors.ErrInvalidAddress.Wrapf("invalid validator address: %s", valErr)
 	}
 
 	delegatorAddress, err := k.authKeeper.AddressCodec().StringToBytes(msg.DelegatorAddress)
 	if err != nil {
-		return nil, sdkerrors.ErrInvalidAddress.Wrapf("invalid delegator address: %s", err)
+		return sdkerrors.ErrInvalidAddress.Wrapf("invalid delegator address: %s", err)
 	}
 
 	// TODO: add capital validation
@@ -280,7 +273,7 @@ func (k Keeper) Delegate(ctx context.Context, msg *types.MsgDelegate) (*types.Ms
 
 	validator, err := k.GetValidator(ctx, valAddr)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	//bondDenom, err := k.BondDenom(ctx)
@@ -294,10 +287,12 @@ func (k Keeper) Delegate(ctx context.Context, msg *types.MsgDelegate) (*types.Ms
 	//	)
 	//}
 
+	// TODO: should check that msg.Capital matches validator.Capital in scope of non-slashable balance?
+
 	// NOTE: source funds are always unbonded
-	_, err = k.DelegateInternal(ctx, delegatorAddress, msg.Capital, types.Unbonded, validator, true)
+	err = k.DelegateInternal(ctx, delegatorAddress, msg.Capital, types.Unbonded, validator)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	if err := k.EventService.EventManager(ctx).EmitKV(
@@ -307,10 +302,10 @@ func (k Keeper) Delegate(ctx context.Context, msg *types.MsgDelegate) (*types.Ms
 		//event.NewAttribute(sdk.AttributeKeyAmount, msg.Amount.String()),
 		//event.NewAttribute(types.AttributeKeyNewShares, newShares.String()),
 	); err != nil {
-		return nil, err
+		return err
 	}
 
-	return &types.MsgDelegateResponse{}, nil
+	return nil
 }
 
 // BeginRedelegate defines a method for performing a redelegation of coins from a source validator to a destination validator of given delegator
@@ -378,192 +373,197 @@ func (k Keeper) Delegate(ctx context.Context, msg *types.MsgDelegate) (*types.Ms
 //}
 
 // Undelegate defines a method for performing an undelegation from a delegate and a validator
-func (k msgServer) Undelegate(ctx context.Context, msg *types.MsgUndelegate) (*types.MsgUndelegateResponse, error) {
+func (k Keeper) Undelegate(ctx context.Context, msg *types.MsgUndelegate) error {
 	addr, err := k.validatorAddressCodec.StringToBytes(msg.ValidatorAddress)
 	if err != nil {
-		return nil, sdkerrors.ErrInvalidAddress.Wrapf("invalid validator address: %s", err)
+		return sdkerrors.ErrInvalidAddress.Wrapf("invalid validator address: %s", err)
 	}
 
 	delegatorAddress, err := k.authKeeper.AddressCodec().StringToBytes(msg.DelegatorAddress)
 	if err != nil {
-		return nil, sdkerrors.ErrInvalidAddress.Wrapf("invalid delegator address: %s", err)
+		return sdkerrors.ErrInvalidAddress.Wrapf("invalid delegator address: %s", err)
 	}
 
-	if !msg.Amount.IsValid() || !msg.Amount.Amount.IsPositive() {
-		return nil, errorsmod.Wrap(
+	if !msg.Capital.IsPositive() {
+		return errorsmod.Wrap(
 			sdkerrors.ErrInvalidRequest,
-			"invalid shares amount",
+			"invalid capital amount",
 		)
 	}
 
-	shares, err := k.ValidateUnbondAmount(
-		ctx, delegatorAddress, addr, msg.Amount.Amount,
-	)
+	//if !msg.Amount.IsValid() || !msg.Amount.Amount.IsPositive() {
+	//	return nil, errorsmod.Wrap(
+	//		sdkerrors.ErrInvalidRequest,
+	//		"invalid shares amount",
+	//	)
+	//}
+
+	//shares, err := k.ValidateUnbondAmount(
+	//	ctx, delegatorAddress, addr, msg.Amount.Amount,
+	//)
+	//if err != nil {
+	//	return nil, err
+	//}
+
+	//bondDenom, err := k.BondDenom(ctx)
+	//if err != nil {
+	//	return nil, err
+	//}
+
+	//if msg.Amount.Denom != bondDenom {
+	//	return nil, errorsmod.Wrapf(
+	//		sdkerrors.ErrInvalidRequest, "invalid coin denomination: got %s, expected %s", msg.Amount.Denom, bondDenom,
+	//	)
+	//}
+
+	//completionTime, undelegatedAmt, err := k.Keeper.Undelegate(ctx, delegatorAddress, addr, shares)
+	completionTime, err := k.UndelegateInternal(ctx, delegatorAddress, addr, msg.Capital)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
-	bondDenom, err := k.BondDenom(ctx)
-	if err != nil {
-		return nil, err
-	}
-
-	if msg.Amount.Denom != bondDenom {
-		return nil, errorsmod.Wrapf(
-			sdkerrors.ErrInvalidRequest, "invalid coin denomination: got %s, expected %s", msg.Amount.Denom, bondDenom,
-		)
-	}
-
-	completionTime, undelegatedAmt, err := k.Keeper.Undelegate(ctx, delegatorAddress, addr, shares)
-	if err != nil {
-		return nil, err
-	}
-
-	undelegatedCoin := sdk.NewCoin(msg.Amount.Denom, undelegatedAmt)
+	//undelegatedCoin := sdk.NewCoin(msg.Amount.Denom, undelegatedAmt)
 
 	if err := k.EventService.EventManager(ctx).EmitKV(
 		types.EventTypeUnbond,
 		event.NewAttribute(types.AttributeKeyValidator, msg.ValidatorAddress),
 		event.NewAttribute(types.AttributeKeyDelegator, msg.DelegatorAddress),
-		event.NewAttribute(sdk.AttributeKeyAmount, undelegatedCoin.String()),
+		//event.NewAttribute(sdk.AttributeKeyAmount, undelegatedCoin.String()),
 		event.NewAttribute(types.AttributeKeyCompletionTime, completionTime.Format(time.RFC3339)),
 	); err != nil {
-		return nil, err
+		return err
 	}
 
-	return &types.MsgUndelegateResponse{
-		CompletionTime: completionTime,
-		Amount:         undelegatedCoin,
-	}, nil
+	return nil
 }
 
 // CancelUnbondingDelegation defines a method for canceling the unbonding delegation
 // and delegate back to the validator.
-func (k msgServer) CancelUnbondingDelegation(ctx context.Context, msg *types.MsgCancelUnbondingDelegation) (*types.MsgCancelUnbondingDelegationResponse, error) {
-	valAddr, err := k.validatorAddressCodec.StringToBytes(msg.ValidatorAddress)
-	if err != nil {
-		return nil, sdkerrors.ErrInvalidAddress.Wrapf("invalid validator address: %s", err)
-	}
-
-	delegatorAddress, err := k.authKeeper.AddressCodec().StringToBytes(msg.DelegatorAddress)
-	if err != nil {
-		return nil, sdkerrors.ErrInvalidAddress.Wrapf("invalid delegator address: %s", err)
-	}
-
-	if !msg.Amount.IsValid() || !msg.Amount.Amount.IsPositive() {
-		return nil, errorsmod.Wrap(
-			sdkerrors.ErrInvalidRequest,
-			"invalid amount",
-		)
-	}
-
-	if msg.CreationHeight <= 0 {
-		return nil, errorsmod.Wrap(
-			sdkerrors.ErrInvalidRequest,
-			"invalid height",
-		)
-	}
-
-	bondDenom, err := k.BondDenom(ctx)
-	if err != nil {
-		return nil, err
-	}
-
-	if msg.Amount.Denom != bondDenom {
-		return nil, errorsmod.Wrapf(
-			sdkerrors.ErrInvalidRequest, "invalid coin denomination: got %s, expected %s", msg.Amount.Denom, bondDenom,
-		)
-	}
-
-	validator, err := k.GetValidator(ctx, valAddr)
-	if err != nil {
-		return nil, err
-	}
-
-	// In some situations, the exchange rate becomes invalid, e.g. if
-	// Validator loses all tokens due to slashing. In this case,
-	// make all future delegations invalid.
-	if validator.InvalidExRate() {
-		return nil, types.ErrDelegatorShareExRateInvalid
-	}
-
-	if validator.IsJailed() {
-		return nil, types.ErrValidatorJailed
-	}
-
-	ubd, err := k.GetUnbondingDelegation(ctx, delegatorAddress, valAddr)
-	if err != nil {
-		return nil, status.Errorf(
-			codes.NotFound,
-			"unbonding delegation with delegator %s not found for validator %s",
-			msg.DelegatorAddress, msg.ValidatorAddress,
-		)
-	}
-
-	var (
-		unbondEntry      types.UnbondingDelegationEntry
-		unbondEntryIndex int64 = -1
-	)
-
-	for i, entry := range ubd.Entries {
-		if entry.CreationHeight == msg.CreationHeight {
-			unbondEntry = entry
-			unbondEntryIndex = int64(i)
-			break
-		}
-	}
-	if unbondEntryIndex == -1 {
-		return nil, sdkerrors.ErrNotFound.Wrapf("unbonding delegation entry is not found at block height %d", msg.CreationHeight)
-	}
-
-	if unbondEntry.Balance.LT(msg.Amount.Amount) {
-		return nil, sdkerrors.ErrInvalidRequest.Wrap("amount is greater than the unbonding delegation entry balance")
-	}
-
-	headerInfo := k.HeaderService.HeaderInfo(ctx)
-	if unbondEntry.CompletionTime.Before(headerInfo.Time) {
-		return nil, sdkerrors.ErrInvalidRequest.Wrap("unbonding delegation is already processed")
-	}
-
-	// delegate back the unbonding delegation amount to the validator
-	_, err = k.Keeper.DelegateInternal(ctx, delegatorAddress, msg.Amount.Amount, types.Unbonding, validator, false)
-	if err != nil {
-		return nil, err
-	}
-
-	amount := unbondEntry.Balance.Sub(msg.Amount.Amount)
-	if amount.IsZero() {
-		ubd.RemoveEntry(unbondEntryIndex)
-	} else {
-		// update the unbondingDelegationEntryBalance and InitialBalance for ubd entry
-		unbondEntry.Balance = amount
-		unbondEntry.InitialBalance = unbondEntry.InitialBalance.Sub(msg.Amount.Amount)
-		ubd.Entries[unbondEntryIndex] = unbondEntry
-	}
-
-	// set the unbonding delegation or remove it if there are no more entries
-	if len(ubd.Entries) == 0 {
-		err = k.RemoveUnbondingDelegation(ctx, ubd)
-	} else {
-		err = k.SetUnbondingDelegation(ctx, ubd)
-	}
-
-	if err != nil {
-		return nil, err
-	}
-
-	if err := k.EventService.EventManager(ctx).EmitKV(
-		types.EventTypeCancelUnbondingDelegation,
-		event.NewAttribute(sdk.AttributeKeyAmount, msg.Amount.String()),
-		event.NewAttribute(types.AttributeKeyValidator, msg.ValidatorAddress),
-		event.NewAttribute(types.AttributeKeyDelegator, msg.DelegatorAddress),
-		event.NewAttribute(types.AttributeKeyCreationHeight, strconv.FormatInt(msg.CreationHeight, 10)),
-	); err != nil {
-		return nil, err
-	}
-
-	return &types.MsgCancelUnbondingDelegationResponse{}, nil
-}
+//func (k msgServer) CancelUnbondingDelegation(ctx context.Context, msg *types.MsgCancelUnbondingDelegation) (*types.MsgCancelUnbondingDelegationResponse, error) {
+//	valAddr, err := k.validatorAddressCodec.StringToBytes(msg.ValidatorAddress)
+//	if err != nil {
+//		return nil, sdkerrors.ErrInvalidAddress.Wrapf("invalid validator address: %s", err)
+//	}
+//
+//	delegatorAddress, err := k.authKeeper.AddressCodec().StringToBytes(msg.DelegatorAddress)
+//	if err != nil {
+//		return nil, sdkerrors.ErrInvalidAddress.Wrapf("invalid delegator address: %s", err)
+//	}
+//
+//	if !msg.Amount.IsValid() || !msg.Amount.Amount.IsPositive() {
+//		return nil, errorsmod.Wrap(
+//			sdkerrors.ErrInvalidRequest,
+//			"invalid amount",
+//		)
+//	}
+//
+//	if msg.CreationHeight <= 0 {
+//		return nil, errorsmod.Wrap(
+//			sdkerrors.ErrInvalidRequest,
+//			"invalid height",
+//		)
+//	}
+//
+//	bondDenom, err := k.BondDenom(ctx)
+//	if err != nil {
+//		return nil, err
+//	}
+//
+//	if msg.Amount.Denom != bondDenom {
+//		return nil, errorsmod.Wrapf(
+//			sdkerrors.ErrInvalidRequest, "invalid coin denomination: got %s, expected %s", msg.Amount.Denom, bondDenom,
+//		)
+//	}
+//
+//	validator, err := k.GetValidator(ctx, valAddr)
+//	if err != nil {
+//		return nil, err
+//	}
+//
+//	// In some situations, the exchange rate becomes invalid, e.g. if
+//	// Validator loses all tokens due to slashing. In this case,
+//	// make all future delegations invalid.
+//	if validator.InvalidExRate() {
+//		return nil, types.ErrDelegatorShareExRateInvalid
+//	}
+//
+//	if validator.IsJailed() {
+//		return nil, types.ErrValidatorJailed
+//	}
+//
+//	ubd, err := k.GetUnbondingDelegation(ctx, delegatorAddress, valAddr)
+//	if err != nil {
+//		return nil, status.Errorf(
+//			codes.NotFound,
+//			"unbonding delegation with delegator %s not found for validator %s",
+//			msg.DelegatorAddress, msg.ValidatorAddress,
+//		)
+//	}
+//
+//	var (
+//		unbondEntry      types.UnbondingDelegationEntry
+//		unbondEntryIndex int64 = -1
+//	)
+//
+//	for i, entry := range ubd.Entries {
+//		if entry.CreationHeight == msg.CreationHeight {
+//			unbondEntry = entry
+//			unbondEntryIndex = int64(i)
+//			break
+//		}
+//	}
+//	if unbondEntryIndex == -1 {
+//		return nil, sdkerrors.ErrNotFound.Wrapf("unbonding delegation entry is not found at block height %d", msg.CreationHeight)
+//	}
+//
+//	if unbondEntry.Balance.LT(msg.Amount.Amount) {
+//		return nil, sdkerrors.ErrInvalidRequest.Wrap("amount is greater than the unbonding delegation entry balance")
+//	}
+//
+//	headerInfo := k.HeaderService.HeaderInfo(ctx)
+//	if unbondEntry.CompletionTime.Before(headerInfo.Time) {
+//		return nil, sdkerrors.ErrInvalidRequest.Wrap("unbonding delegation is already processed")
+//	}
+//
+//	// delegate back the unbonding delegation amount to the validator
+//	_, err = k.Keeper.DelegateInternal(ctx, delegatorAddress, msg.Amount.Amount, types.Unbonding, validator, false)
+//	if err != nil {
+//		return nil, err
+//	}
+//
+//	amount := unbondEntry.Balance.Sub(msg.Amount.Amount)
+//	if amount.IsZero() {
+//		ubd.RemoveEntry(unbondEntryIndex)
+//	} else {
+//		// update the unbondingDelegationEntryBalance and InitialBalance for ubd entry
+//		unbondEntry.Balance = amount
+//		unbondEntry.InitialBalance = unbondEntry.InitialBalance.Sub(msg.Amount.Amount)
+//		ubd.Entries[unbondEntryIndex] = unbondEntry
+//	}
+//
+//	// set the unbonding delegation or remove it if there are no more entries
+//	if len(ubd.Entries) == 0 {
+//		err = k.RemoveUnbondingDelegation(ctx, ubd)
+//	} else {
+//		err = k.SetUnbondingDelegation(ctx, ubd)
+//	}
+//
+//	if err != nil {
+//		return nil, err
+//	}
+//
+//	if err := k.EventService.EventManager(ctx).EmitKV(
+//		types.EventTypeCancelUnbondingDelegation,
+//		event.NewAttribute(sdk.AttributeKeyAmount, msg.Amount.String()),
+//		event.NewAttribute(types.AttributeKeyValidator, msg.ValidatorAddress),
+//		event.NewAttribute(types.AttributeKeyDelegator, msg.DelegatorAddress),
+//		event.NewAttribute(types.AttributeKeyCreationHeight, strconv.FormatInt(msg.CreationHeight, 10)),
+//	); err != nil {
+//		return nil, err
+//	}
+//
+//	return &types.MsgCancelUnbondingDelegationResponse{}, nil
+//}
 
 // UpdateParams defines a method to perform updation of params exist in x/staking module.
 func (k msgServer) UpdateParams(ctx context.Context, msg *types.MsgUpdateParams) (*types.MsgUpdateParamsResponse, error) {
@@ -615,130 +615,6 @@ func (k msgServer) UpdateParams(ctx context.Context, msg *types.MsgUpdateParams)
 	return &types.MsgUpdateParamsResponse{}, nil
 }
 
-// RotateConsPubKey handles the rotation of a validator's consensus public key.
-// It validates the new key, checks for conflicts, and updates the necessary state.
-// The function requires that the validator params are not nil for successful execution.
-func (k msgServer) RotateConsPubKey(ctx context.Context, msg *types.MsgRotateConsPubKey) (res *types.MsgRotateConsPubKeyResponse, err error) {
-	cv := msg.NewPubkey.GetCachedValue()
-	if cv == nil {
-		return nil, errorsmod.Wrap(sdkerrors.ErrInvalidType, "new public key is nil")
-	}
-
-	pk, ok := cv.(cryptotypes.PubKey)
-	if !ok {
-		return nil, errorsmod.Wrapf(sdkerrors.ErrInvalidType, "expecting cryptotypes.PubKey, got %T", cv)
-	}
-
-	pubkeyTypes, err := k.consensusKeeper.ValidatorPubKeyTypes(ctx)
-	if err != nil {
-		return nil, err
-	}
-
-	if pubkeyTypes == nil {
-		return nil, errorsmod.Wrap(sdkerrors.ErrInvalidRequest, "validator params are not set")
-	}
-
-	if err = validatePubKey(pk, pubkeyTypes); err != nil {
-		return nil, err
-	}
-
-	err = k.checkConsKeyAlreadyUsed(ctx, pk)
-	if err != nil {
-		return nil, err
-	}
-
-	valAddr, err := k.validatorAddressCodec.StringToBytes(msg.ValidatorAddress)
-	if err != nil {
-		return nil, err
-	}
-
-	validator, err := k.Keeper.GetValidator(ctx, valAddr)
-	if err != nil {
-		return nil, err
-	}
-
-	if validator.GetOperator() == "" {
-		return nil, types.ErrNoValidatorFound
-	}
-
-	if status := validator.GetStatus(); status != sdk.Bonded {
-		return nil, errorsmod.Wrapf(sdkerrors.ErrInvalidType, "validator status is not bonded, got %x", status)
-	}
-
-	// Check if the validator is exceeding parameter MaxConsPubKeyRotations within the
-	// unbonding period by iterating ConsPubKeyRotationHistory.
-	err = k.ExceedsMaxRotations(ctx, valAddr)
-	if err != nil {
-		return nil, err
-	}
-
-	// Check if the signing account has enough balance to pay KeyRotationFee
-	// KeyRotationFees are sent to the community fund.
-	params, err := k.Params.Get(ctx)
-	if err != nil {
-		return nil, err
-	}
-
-	err = k.Keeper.bankKeeper.SendCoinsFromAccountToModule(ctx, sdk.AccAddress(valAddr), types.PoolModuleName, sdk.NewCoins(params.KeyRotationFee))
-	if err != nil {
-		return nil, err
-	}
-
-	// Add ConsPubKeyRotationHistory for tracking rotation
-	err = k.setConsPubKeyRotationHistory(
-		ctx,
-		valAddr,
-		validator.ConsensusPubkey,
-		msg.NewPubkey,
-		params.KeyRotationFee,
-	)
-	if err != nil {
-		return nil, err
-	}
-
-	return res, nil
-}
-
-// checkConsKeyAlreadyUsed returns an error if the consensus public key is already used,
-// in ConsAddrToValidatorIdentifierMap, OldToNewConsAddrMap, or in the current block (RotationHistory).
-func (k Keeper) checkConsKeyAlreadyUsed(ctx context.Context, newConsPubKey cryptotypes.PubKey) error {
-	newConsAddr := sdk.ConsAddress(newConsPubKey.Address())
-	rotatedTo, err := k.ConsAddrToValidatorIdentifierMap.Get(ctx, newConsAddr)
-	if err != nil && !errors.Is(err, collections.ErrNotFound) {
-		return err
-	}
-
-	if rotatedTo != nil {
-		return sdkerrors.ErrInvalidAddress.Wrap(
-			"public key was already used")
-	}
-
-	// check in the current block
-	rotationHistory, err := k.GetBlockConsPubKeyRotationHistory(ctx)
-	if err != nil {
-		return err
-	}
-
-	for _, rotation := range rotationHistory {
-		cachedValue := rotation.NewConsPubkey.GetCachedValue()
-		if cachedValue == nil {
-			return sdkerrors.ErrInvalidAddress.Wrap("new public key is nil")
-		}
-		if bytes.Equal(cachedValue.(cryptotypes.PubKey).Address(), newConsAddr) {
-			return sdkerrors.ErrInvalidAddress.Wrap("public key was already used")
-		}
-	}
-
-	// checks if NewPubKey is not duplicated on ValidatorsByConsAddr
-	//_, err = k.Keeper.ValidatorByConsAddr(ctx, newConsAddr)
-	_, err = k.ValidatorByConsAddr(ctx, newConsAddr)
-	if err == nil {
-		return types.ErrValidatorPubKeyExists
-	}
-
-	return nil
-}
-
 func validatePubKey(pk cryptotypes.PubKey, knownPubKeyTypes []string) error {
 	pkType := pk.Type()
 	if !slices.Contains(knownPubKeyTypes, pkType) {
@@ -759,3 +635,127 @@ func validatePubKey(pk cryptotypes.PubKey, knownPubKeyTypes []string) error {
 
 	return nil
 }
+
+// RotateConsPubKey handles the rotation of a validator's consensus public key.
+// It validates the new key, checks for conflicts, and updates the necessary state.
+// The function requires that the validator params are not nil for successful execution.
+//func (k msgServer) RotateConsPubKey(ctx context.Context, msg *types.MsgRotateConsPubKey) (res *types.MsgRotateConsPubKeyResponse, err error) {
+//	cv := msg.NewPubkey.GetCachedValue()
+//	if cv == nil {
+//		return nil, errorsmod.Wrap(sdkerrors.ErrInvalidType, "new public key is nil")
+//	}
+//
+//	pk, ok := cv.(cryptotypes.PubKey)
+//	if !ok {
+//		return nil, errorsmod.Wrapf(sdkerrors.ErrInvalidType, "expecting cryptotypes.PubKey, got %T", cv)
+//	}
+//
+//	pubkeyTypes, err := k.consensusKeeper.ValidatorPubKeyTypes(ctx)
+//	if err != nil {
+//		return nil, err
+//	}
+//
+//	if pubkeyTypes == nil {
+//		return nil, errorsmod.Wrap(sdkerrors.ErrInvalidRequest, "validator params are not set")
+//	}
+//
+//	if err = validatePubKey(pk, pubkeyTypes); err != nil {
+//		return nil, err
+//	}
+//
+//	err = k.checkConsKeyAlreadyUsed(ctx, pk)
+//	if err != nil {
+//		return nil, err
+//	}
+//
+//	valAddr, err := k.validatorAddressCodec.StringToBytes(msg.ValidatorAddress)
+//	if err != nil {
+//		return nil, err
+//	}
+//
+//	validator, err := k.Keeper.GetValidator(ctx, valAddr)
+//	if err != nil {
+//		return nil, err
+//	}
+//
+//	if validator.GetOperator() == "" {
+//		return nil, types.ErrNoValidatorFound
+//	}
+//
+//	if status := validator.GetStatus(); status != sdk.Bonded {
+//		return nil, errorsmod.Wrapf(sdkerrors.ErrInvalidType, "validator status is not bonded, got %x", status)
+//	}
+//
+//	// Check if the validator is exceeding parameter MaxConsPubKeyRotations within the
+//	// unbonding period by iterating ConsPubKeyRotationHistory.
+//	err = k.ExceedsMaxRotations(ctx, valAddr)
+//	if err != nil {
+//		return nil, err
+//	}
+//
+//	// Check if the signing account has enough balance to pay KeyRotationFee
+//	// KeyRotationFees are sent to the community fund.
+//	params, err := k.Params.Get(ctx)
+//	if err != nil {
+//		return nil, err
+//	}
+//
+//	err = k.Keeper.bankKeeper.SendCoinsFromAccountToModule(ctx, sdk.AccAddress(valAddr), types.PoolModuleName, sdk.NewCoins(params.KeyRotationFee))
+//	if err != nil {
+//		return nil, err
+//	}
+//
+//	// Add ConsPubKeyRotationHistory for tracking rotation
+//	err = k.setConsPubKeyRotationHistory(
+//		ctx,
+//		valAddr,
+//		validator.ConsensusPubkey,
+//		msg.NewPubkey,
+//		params.KeyRotationFee,
+//	)
+//	if err != nil {
+//		return nil, err
+//	}
+//
+//	return res, nil
+//}
+
+// checkConsKeyAlreadyUsed returns an error if the consensus public key is already used,
+// in ConsAddrToValidatorIdentifierMap, OldToNewConsAddrMap, or in the current block (RotationHistory).
+//func (k Keeper) checkConsKeyAlreadyUsed(ctx context.Context, newConsPubKey cryptotypes.PubKey) error {
+//	newConsAddr := sdk.ConsAddress(newConsPubKey.Address())
+//	rotatedTo, err := k.ConsAddrToValidatorIdentifierMap.Get(ctx, newConsAddr)
+//	if err != nil && !errors.Is(err, collections.ErrNotFound) {
+//		return err
+//	}
+//
+//	if rotatedTo != nil {
+//		return sdkerrors.ErrInvalidAddress.Wrap(
+//			"public key was already used")
+//	}
+//
+//	// check in the current block
+//	rotationHistory, err := k.GetBlockConsPubKeyRotationHistory(ctx)
+//	if err != nil {
+//		return err
+//	}
+//
+//	for _, rotation := range rotationHistory {
+//		cachedValue := rotation.NewConsPubkey.GetCachedValue()
+//		if cachedValue == nil {
+//			return sdkerrors.ErrInvalidAddress.Wrap("new public key is nil")
+//		}
+//		if bytes.Equal(cachedValue.(cryptotypes.PubKey).Address(), newConsAddr) {
+//			return sdkerrors.ErrInvalidAddress.Wrap("public key was already used")
+//		}
+//	}
+//
+//	// checks if NewPubKey is not duplicated on ValidatorsByConsAddr
+//	//_, err = k.Keeper.ValidatorByConsAddr(ctx, newConsAddr)
+//	_, err = k.ValidatorByConsAddr(ctx, newConsAddr)
+//	if err == nil {
+//		return types.ErrValidatorPubKeyExists
+//	}
+//
+//	return nil
+//}

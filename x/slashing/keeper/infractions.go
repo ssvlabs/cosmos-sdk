@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 
-	st "cosmossdk.io/api/cosmos/staking/v1beta1"
 	"cosmossdk.io/core/comet"
 	"cosmossdk.io/core/event"
 	"cosmossdk.io/x/slashing/types"
@@ -148,17 +147,17 @@ func (k Keeper) HandleValidatorSignatureWithParams(ctx context.Context, params t
 			// Note that this *can* result in a negative "distributionHeight" of up to -ValidatorUpdateDelay-1,
 			// i.e. at the end of the pre-genesis block (none) = at the beginning of the genesis block.
 			// This is acceptable since it's only used to filter unbonding delegations & redelegations.
-			distributionHeight := height - sdk.ValidatorUpdateDelay - 1
+			//distributionHeight := height - sdk.ValidatorUpdateDelay - 1
 
 			slashFractionDowntime, err := k.SlashFractionDowntime(ctx)
 			if err != nil {
 				return err
 			}
 
-			coinsBurned, err := k.sk.SlashWithInfractionReason(ctx, consAddr, distributionHeight, power, slashFractionDowntime, st.Infraction_INFRACTION_DOWNTIME)
-			if err != nil {
-				return err
-			}
+			//coinsBurned, err := k.sk.SlashWithInfractionReason(ctx, consAddr, distributionHeight, power, slashFractionDowntime, st.Infraction_INFRACTION_DOWNTIME)
+			//if err != nil {
+			//	return err
+			//}
 
 			if err := k.EventService.EventManager(ctx).EmitKV(
 				types.EventTypeSlash,
@@ -166,7 +165,7 @@ func (k Keeper) HandleValidatorSignatureWithParams(ctx context.Context, params t
 				event.NewAttribute(types.AttributeKeyPower, fmt.Sprintf("%d", power)),
 				event.NewAttribute(types.AttributeKeyReason, types.AttributeValueMissingSignature),
 				event.NewAttribute(types.AttributeKeyJailed, consStr),
-				event.NewAttribute(types.AttributeKeyBurnedCoins, coinsBurned.String()),
+				//event.NewAttribute(types.AttributeKeyBurnedCoins, coinsBurned.String()),
 			); err != nil {
 				return err
 			}

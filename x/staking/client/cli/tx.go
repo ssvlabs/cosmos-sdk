@@ -175,27 +175,27 @@ func NewEditValidatorCmd() *cobra.Command {
 }
 
 func newBuildCreateValidatorMsg(clientCtx client.Context, txf tx.Factory, fs *flag.FlagSet, val validator, valAc address.Codec) (tx.Factory, *types.MsgCreateValidator, error) {
-	valAddr := clientCtx.GetFromAddress()
+	//valAddr := clientCtx.GetFromAddress()
+	//
+	//description := types.NewDescription(
+	//	val.Moniker,
+	//	val.Identity,
+	//	val.Website,
+	//	val.Security,
+	//	val.Details,
+	//)
 
-	description := types.NewDescription(
-		val.Moniker,
-		val.Identity,
-		val.Website,
-		val.Security,
-		val.Details,
-	)
-
-	valStr, err := valAc.BytesToString(sdk.ValAddress(valAddr))
-	if err != nil {
-		return txf, nil, err
-	}
-	msg, err := types.NewMsgCreateValidator(valStr, val.PubKey, description, val.CommissionRates, val.MinSelfDelegation)
-	if err != nil {
-		return txf, nil, err
-	}
-	if err := msg.Validate(valAc); err != nil {
-		return txf, nil, err
-	}
+	//valStr, err := valAc.BytesToString(sdk.ValAddress(valAddr))
+	//if err != nil {
+	//	return txf, nil, err
+	//}
+	//msg, err := types.NewMsgCreateValidator(valStr, val.PubKey, description, val.CommissionRates, val.MinSelfDelegation)
+	//if err != nil {
+	//	return txf, nil, err
+	//}
+	//if err := msg.Validate(valAc); err != nil {
+	//	return txf, nil, err
+	//}
 
 	genOnly, _ := fs.GetBool(flags.FlagGenerateOnly)
 	if genOnly {
@@ -208,7 +208,8 @@ func newBuildCreateValidatorMsg(clientCtx client.Context, txf tx.Factory, fs *fl
 		}
 	}
 
-	return txf, msg, nil
+	//return txf, msg, nil
+	return txf, nil, nil
 }
 
 // Return the flagset, particular flags, and a description of defaults
@@ -364,58 +365,59 @@ func PrepareConfigForTxCreateValidator(flagSet *flag.FlagSet, moniker, nodeID, c
 
 // BuildCreateValidatorMsg makes a new MsgCreateValidator.
 func BuildCreateValidatorMsg(clientCtx client.Context, config TxCreateValidatorConfig, txBldr tx.Factory, generateOnly bool) (tx.Factory, sdk.Msg, error) {
-	amounstStr := config.Amount
-	amount, err := sdk.ParseCoinNormalized(amounstStr)
-	if err != nil {
-		return txBldr, nil, err
-	}
+	//amounstStr := config.Amount
+	//amount, err := sdk.ParseCoinNormalized(amounstStr)
+	//if err != nil {
+	//	return txBldr, nil, err
+	//}
 
-	valAddr := clientCtx.GetFromAddress()
-	description := types.NewDescription(
-		config.Moniker,
-		config.Identity,
-		config.Website,
-		config.SecurityContact,
-		config.Details,
-	)
+	//valAddr := clientCtx.GetFromAddress()
+	//description := types.NewDescription(
+	//	config.Moniker,
+	//	config.Identity,
+	//	config.Website,
+	//	config.SecurityContact,
+	//	config.Details,
+	//)
+	//
+	//get the initial validator commission parameters
+	//rateStr := config.CommissionRate
+	//maxRateStr := config.CommissionMaxRate
+	//maxChangeRateStr := config.CommissionMaxChangeRate
+	//commissionRates, err := buildCommissionRates(rateStr, maxRateStr, maxChangeRateStr)
+	//if err != nil {
+	//	return txBldr, nil, err
+	//}
+	//
+	//get the initial validator min self delegation
+	//msbStr := config.MinSelfDelegation
+	//minSelfDelegation, ok := math.NewIntFromString(msbStr)
+	//
+	//if !ok {
+	//	return txBldr, nil, errorsmod.Wrap(sdkerrors.ErrInvalidRequest, "minimum self delegation must be a positive integer")
+	//}
 
-	// get the initial validator commission parameters
-	rateStr := config.CommissionRate
-	maxRateStr := config.CommissionMaxRate
-	maxChangeRateStr := config.CommissionMaxChangeRate
-	commissionRates, err := buildCommissionRates(rateStr, maxRateStr, maxChangeRateStr)
-	if err != nil {
-		return txBldr, nil, err
-	}
+	//valCodec := clientCtx.TxConfig.SigningContext().ValidatorAddressCodec()
+	//valStr, err := valCodec.BytesToString(valAddr)
+	//if err != nil {
+	//	return txBldr, nil, err
+	//}
 
-	// get the initial validator min self delegation
-	msbStr := config.MinSelfDelegation
-	minSelfDelegation, ok := math.NewIntFromString(msbStr)
-
-	if !ok {
-		return txBldr, nil, errorsmod.Wrap(sdkerrors.ErrInvalidRequest, "minimum self delegation must be a positive integer")
-	}
-
-	valCodec := clientCtx.TxConfig.SigningContext().ValidatorAddressCodec()
-	valStr, err := valCodec.BytesToString(valAddr)
-	if err != nil {
-		return txBldr, nil, err
-	}
-
-	msg, err := types.NewMsgCreateValidator(valStr, config.PubKey, description, commissionRates, minSelfDelegation)
-	if err != nil {
-		return txBldr, msg, err
-	}
-
-	if generateOnly {
-		ip := config.IP
-		p2pPort := config.P2PPort
-		nodeID := config.NodeID
-
-		if nodeID != "" && ip != "" && p2pPort > 0 {
-			txBldr = txBldr.WithMemo(fmt.Sprintf("%s@%s:%d", nodeID, ip, p2pPort))
-		}
-	}
-
-	return txBldr, msg, nil
+	//msg, err := types.NewMsgCreateValidator(valStr, config.PubKey, description, commissionRates, minSelfDelegation)
+	//if err != nil {
+	//	return txBldr, msg, err
+	//}
+	//
+	//if generateOnly {
+	//	ip := config.IP
+	//	p2pPort := config.P2PPort
+	//	nodeID := config.NodeID
+	//
+	//	if nodeID != "" && ip != "" && p2pPort > 0 {
+	//		txBldr = txBldr.WithMemo(fmt.Sprintf("%s@%s:%d", nodeID, ip, p2pPort))
+	//	}
+	//}
+	//
+	//return txBldr, msg, nil
+	return txBldr, nil, nil
 }

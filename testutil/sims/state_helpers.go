@@ -127,7 +127,7 @@ func AppStateFnWithExtendedCbs(
 			if val.Status != stakingtypes.Unbonded {
 				continue
 			}
-			notBondedTokens = notBondedTokens.Add(val.GetTokens())
+			//notBondedTokens = notBondedTokens.Add(val.GetTokens())
 		}
 		notBondedCoins := sdk.NewCoin(stakingState.Params.BondDenom, notBondedTokens)
 		// edit bank state to make it have the not bonded pool tokens

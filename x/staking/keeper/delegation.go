@@ -1,19 +1,15 @@
 package keeper
 
 import (
-	"bytes"
 	"context"
 	"errors"
-	"fmt"
 	"time"
 
 	"cosmossdk.io/collections"
-	errorsmod "cosmossdk.io/errors"
 	"cosmossdk.io/math"
 	"cosmossdk.io/x/staking/types"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 )
 
 // GetAllDelegations returns all delegations used during genesis dump.
@@ -213,29 +209,29 @@ func (k Keeper) GetDelegatorUnbonding(ctx context.Context, delegator sdk.AccAddr
 }
 
 // GetDelegatorBonded returns the total amount a delegator has bonded.
-func (k Keeper) GetDelegatorBonded(ctx context.Context, delegator sdk.AccAddress) (math.Int, error) {
-	bonded := math.LegacyZeroDec()
-
-	var iterErr error
-	err := k.IterateDelegatorDelegations(ctx, delegator, func(delegation types.Delegation) bool {
-		validatorAddr, err := k.validatorAddressCodec.StringToBytes(delegation.ValidatorAddress)
-		if err != nil {
-			iterErr = err
-			return true
-		}
-		validator, err := k.GetValidator(ctx, validatorAddr)
-		if err == nil {
-			shares := delegation.Shares
-			tokens := validator.TokensFromSharesTruncated(shares)
-			bonded = bonded.Add(tokens)
-		}
-		return false
-	})
-	if iterErr != nil {
-		return bonded.RoundInt(), iterErr
-	}
-	return bonded.RoundInt(), err
-}
+//func (k Keeper) GetDelegatorBonded(ctx context.Context, delegator sdk.AccAddress) (math.Int, error) {
+//	bonded := math.LegacyZeroDec()
+//
+//	var iterErr error
+//	err := k.IterateDelegatorDelegations(ctx, delegator, func(delegation types.Delegation) bool {
+//		validatorAddr, err := k.validatorAddressCodec.StringToBytes(delegation.ValidatorAddress)
+//		if err != nil {
+//			iterErr = err
+//			return true
+//		}
+//		validator, err := k.GetValidator(ctx, validatorAddr)
+//		if err == nil {
+//			shares := delegation.Shares
+//			tokens := validator.TokensFromSharesTruncated(shares)
+//			bonded = bonded.Add(tokens)
+//		}
+//		return false
+//	})
+//	if iterErr != nil {
+//		return bonded.RoundInt(), iterErr
+//	}
+//	return bonded.RoundInt(), err
+//}
 
 // IterateDelegatorDelegations iterates through one delegator's delegations.
 func (k Keeper) IterateDelegatorDelegations(ctx context.Context, delegator sdk.AccAddress, cb func(delegation types.Delegation) (stop bool)) error {
@@ -646,8 +642,8 @@ func (k Keeper) DequeueAllMatureRedelegationQueue(ctx context.Context, currTime 
 // tokenSrc indicates the bond status of the incoming funds.
 func (k Keeper) DelegateInternal(
 	ctx context.Context, delAddr sdk.AccAddress, capital types.Capital, tokenSrc types.BondStatus,
-	validator types.Validator, subtractAccount bool,
-) (newShares math.LegacyDec, err error) {
+	validator types.Validator,
+) error {
 	// In some situations, the exchange rate becomes invalid, e.g. if
 	// Validator loses all tokens due to slashing. In this case,
 	// make all future delegations invalid.
@@ -657,7 +653,7 @@ func (k Keeper) DelegateInternal(
 
 	valbz, err := k.ValidatorAddressCodec().StringToBytes(validator.GetOperator())
 	if err != nil {
-		return math.LegacyZeroDec(), err
+		return err
 	}
 
 	// Get or create the delegation object and call the appropriate hook if present
@@ -669,49 +665,50 @@ func (k Keeper) DelegateInternal(
 		// not found
 		delAddrStr, err1 := k.authKeeper.AddressCodec().BytesToString(delAddr)
 		if err1 != nil {
-			return math.LegacyDec{}, err1
+			return err1
 		}
 
 		delegation = types.NewDelegation(delAddrStr, validator.GetOperator(), math.LegacyZeroDec())
 		err = k.Hooks().BeforeDelegationCreated(ctx, delAddr, valbz)
 	} else {
-		return math.LegacyZeroDec(), err
+		return err
 	}
 
 	if err != nil {
-		return math.LegacyZeroDec(), err
+		return err
 	}
 
 	// if subtractAccount is true then we are
 	// performing a delegation and not a redelegation, thus the source tokens are
 	// all non bonded
-	if subtractAccount {
-		if tokenSrc == types.Bonded {
-			return math.LegacyZeroDec(), errors.New("delegation token source cannot be bonded; expected Unbonded or Unbonding, got Bonded")
-		}
+	//if subtractAccount {
 
-		var sendName string
+	//if tokenSrc == types.Bonded {
+	//	return errors.New("delegation token source cannot be bonded; expected Unbonded or Unbonding, got Bonded")
+	//}
 
-		switch {
-		case validator.IsBonded():
-			sendName = types.BondedPoolName
-		case validator.IsUnbonding(), validator.IsUnbonded():
-			sendName = types.NotBondedPoolName
-		default:
-			return math.LegacyZeroDec(), fmt.Errorf("invalid validator status: %v", validator.Status)
-		}
+	//var sendName string
 
-		bondDenom, err := k.BondDenom(ctx)
-		if err != nil {
-			return math.LegacyDec{}, err
-		}
+	//switch {
+	//case validator.IsBonded():
+	//	sendName = types.BondedPoolName
+	//case validator.IsUnbonding(), validator.IsUnbonded():
+	//	sendName = types.NotBondedPoolName
+	//default:
+	//	return math.LegacyZeroDec(), fmt.Errorf("invalid validator status: %v", validator.Status)
+	//}
 
-		// TODO: transfer capital
-		coins := sdk.NewCoins(sdk.NewCoin(bondDenom, bondAmt))
-		if err := k.bankKeeper.DelegateCoinsFromAccountToModule(ctx, delAddr, sendName, coins); err != nil {
-			return math.LegacyDec{}, err
-		}
-	}
+	//bondDenom, err := k.BondDenom(ctx)
+	//if err != nil {
+	//	return math.LegacyDec{}, err
+	//}
+
+	//coins := sdk.NewCoins(sdk.NewCoin(bondDenom, bondAmt))
+	//if err := k.bankKeeper.DelegateCoinsFromAccountToModule(ctx, delAddr, sendName, coins); err != nil {
+	//	return math.LegacyDec{}, err
+	//}
+
+	//}
 	//else { // responsible for redelegation logic
 	//	// potentially transfer tokens between pools, if
 	//	switch {
@@ -737,117 +734,118 @@ func (k Keeper) DelegateInternal(
 	//}
 
 	// TODO: SSV not slashing/rewarding right now, so disable shares distribution
-	//_, newShares, err = k.AddValidatorTokensAndShares(ctx, validator, bondAmt)
-	//if err != nil {
-	//	return newShares, err
-	//}
+	_, err = k.AddValidatorCapital(ctx, validator, capital)
+	if err != nil {
+		return err
+	}
 	// Update delegation
 	//delegation.Shares = delegation.Shares.Add(newShares)
 
 	if err = k.SetDelegation(ctx, delegation); err != nil {
-		return newShares, err
+		return err
 	}
 
 	// Call the after-modification hook
 	if err := k.Hooks().AfterDelegationModified(ctx, delAddr, valbz); err != nil {
-		return newShares, err
+		return err
 	}
 
-	return newShares, nil
+	return nil
 }
 
 // Unbond unbonds a particular delegation and perform associated store operations.
 func (k Keeper) Unbond(
-	ctx context.Context, delAddr sdk.AccAddress, valAddr sdk.ValAddress, shares math.LegacyDec,
-) (amount math.Int, err error) {
+	ctx context.Context, delAddr sdk.AccAddress, valAddr sdk.ValAddress, capital types.Capital,
+) (err error) {
 	// check if a delegation object exists in the store
-	delegation, err := k.Delegations.Get(ctx, collections.Join(delAddr, valAddr))
+	_, err = k.Delegations.Get(ctx, collections.Join(delAddr, valAddr))
 	if errors.Is(err, collections.ErrNotFound) {
-		return amount, types.ErrNoDelegatorForAddress
+		return types.ErrNoDelegatorForAddress
 	} else if err != nil {
-		return amount, err
+		return err
 	}
 
 	// call the before-delegation-modified hook
 	if err := k.Hooks().BeforeDelegationSharesModified(ctx, delAddr, valAddr); err != nil {
-		return amount, err
+		return err
 	}
 
 	// ensure that we have enough shares to remove
-	if delegation.Shares.LT(shares) {
-		return amount, errorsmod.Wrap(types.ErrNotEnoughDelegationShares, delegation.Shares.String())
-	}
+	//if delegation.Shares.LT(shares) {
+	//	return amount, errorsmod.Wrap(types.ErrNotEnoughDelegationShares, delegation.Shares.String())
+	//}
 
 	// get validator
 	validator, err := k.GetValidator(ctx, valAddr)
 	if err != nil {
-		return amount, err
+		return err
 	}
 
-	// subtract shares from delegation
-	delegation.Shares = delegation.Shares.Sub(shares)
+	//subtract shares from delegation
+	//delegation.Shares = delegation.Shares.Sub(shares)
 
-	delegatorAddress, err := k.authKeeper.AddressCodec().StringToBytes(delegation.DelegatorAddress)
-	if err != nil {
-		return amount, err
-	}
+	//delegatorAddress, err := k.authKeeper.AddressCodec().StringToBytes(delegation.DelegatorAddress)
+	//if err != nil {
+	//	return amount, err
+	//}
 
 	valbz, err := k.ValidatorAddressCodec().StringToBytes(validator.GetOperator())
 	if err != nil {
-		return amount, err
+		return err
 	}
 
-	isValidatorOperator := bytes.Equal(delegatorAddress, valbz)
+	//isValidatorOperator := bytes.Equal(delegatorAddress, valbz)
 
 	// If the delegation is the operator of the validator and undelegating will decrease the validator's
 	// self-delegation below their minimum, we jail the validator.
-	if isValidatorOperator && !validator.Jailed &&
-		validator.TokensFromShares(delegation.Shares).TruncateInt().LT(validator.MinSelfDelegation) {
-		err = k.jailValidator(ctx, validator)
-		if err != nil {
-			return amount, fmt.Errorf("failed to jail validator: %w", err)
-		}
-		validator, err = k.GetValidator(ctx, valbz)
-		if err != nil {
-			return amount, fmt.Errorf("validator record not found for address: %X", valbz)
-		}
-	}
+	//if isValidatorOperator && !validator.Jailed &&
+	//	validator.TokensFromShares(delegation.Shares).TruncateInt().LT(validator.MinSelfDelegation) {
+	//	err = k.jailValidator(ctx, validator)
+	//	if err != nil {
+	//		return amount, fmt.Errorf("failed to jail validator: %w", err)
+	//	}
+	//	validator, err = k.GetValidator(ctx, valbz)
+	//	if err != nil {
+	//		return amount, fmt.Errorf("validator record not found for address: %X", valbz)
+	//	}
+	//}
 
-	if delegation.Shares.IsZero() {
-		err = k.RemoveDelegation(ctx, delegation)
-	} else {
-		if err = k.SetDelegation(ctx, delegation); err != nil {
-			return amount, err
-		}
+	//if delegation.Shares.IsZero() {
+	//	err = k.RemoveDelegation(ctx, delegation)
+	//} else {
+	//	if err = k.SetDelegation(ctx, delegation); err != nil {
+	//		return amount, err
+	//	}
+	//
+	//	valAddr, err1 := k.validatorAddressCodec.StringToBytes(delegation.GetValidatorAddr())
+	//	if err1 != nil {
+	//		return amount, err1
+	//	}
+	//
+	//	call the after delegation modification hook
+	//err = k.Hooks().AfterDelegationModified(ctx, delegatorAddress, valAddr)
+	//}
 
-		valAddr, err1 := k.validatorAddressCodec.StringToBytes(delegation.GetValidatorAddr())
-		if err1 != nil {
-			return amount, err1
-		}
-
-		// call the after delegation modification hook
-		err = k.Hooks().AfterDelegationModified(ctx, delegatorAddress, valAddr)
-	}
-
-	if err != nil {
-		return amount, err
-	}
+	//if err != nil {
+	//	return amount, err
+	//}
 
 	// remove the shares and coins from the validator
 	// NOTE that the amount is later (in keeper.Delegation) moved between staking module pools
-	validator, amount, err = k.RemoveValidatorTokensAndShares(ctx, validator, shares)
+	validator, err = k.RemoveValidatorCapital(ctx, validator, capital)
 	if err != nil {
-		return amount, err
+		return err
 	}
 
-	if validator.DelegatorShares.IsZero() && validator.IsUnbonded() {
+	//if validator.Capital.IsZero() && validator.IsUnbonded() {
+	if validator.Capital.IsZero() {
 		// if not unbonded, we must instead remove validator in EndBlocker once it finishes its unbonding period
 		if err = k.RemoveValidator(ctx, valbz); err != nil {
-			return amount, err
+			return err
 		}
 	}
 
-	return amount, nil
+	return nil
 }
 
 // getBeginInfo returns the completion time and height of a redelegation, along
@@ -891,113 +889,115 @@ func (k Keeper) Unbond(
 // are not exceeded and unbond the staked tokens (based on shares) by creating
 // an unbonding object and inserting it into the unbonding queue which will be
 // processed during the staking EndBlocker.
-func (k Keeper) Undelegate(
-	ctx context.Context, delAddr sdk.AccAddress, valAddr sdk.ValAddress, sharesAmount math.LegacyDec,
-) (time.Time, math.Int, error) {
-	validator, err := k.GetValidator(ctx, valAddr)
-	if err != nil {
-		return time.Time{}, math.Int{}, err
-	}
+func (k Keeper) UndelegateInternal(
+	ctx context.Context, delAddr sdk.AccAddress, valAddr sdk.ValAddress, capital types.Capital,
+) (time.Time, error) {
+	//validator, err := k.GetValidator(ctx, valAddr)
+	//if err != nil {
+	//	return time.Time{}, math.Int{}, err
+	//}
 
-	hasMaxEntries, err := k.HasMaxUnbondingDelegationEntries(ctx, delAddr, valAddr)
-	if err != nil {
-		return time.Time{}, math.Int{}, err
-	}
+	// no queue no max entries
+	//hasMaxEntries, err := k.HasMaxUnbondingDelegationEntries(ctx, delAddr, valAddr)
+	//if err != nil {
+	//	return time.Time{}, math.Int{}, err
+	//}
 
-	if hasMaxEntries {
-		return time.Time{}, math.Int{}, types.ErrMaxUnbondingDelegationEntries
-	}
+	//if hasMaxEntries {
+	//	return time.Time{}, math.Int{}, types.ErrMaxUnbondingDelegationEntries
+	//}
 
-	returnAmount, err := k.Unbond(ctx, delAddr, valAddr, sharesAmount)
+	err := k.Unbond(ctx, delAddr, valAddr, capital)
 	if err != nil {
-		return time.Time{}, math.Int{}, err
+		return time.Time{}, err
 	}
 
 	// transfer the validator tokens to the not bonded pool
-	if validator.IsBonded() {
-		err = k.bondedTokensToNotBonded(ctx, returnAmount)
-		if err != nil {
-			return time.Time{}, math.Int{}, err
-		}
-	}
+	//if validator.IsBonded() {
+	//	err = k.bondedTokensToNotBonded(ctx, returnAmount)
+	//	if err != nil {
+	//		return time.Time{}, math.Int{}, err
+	//	}
+	//}
 
-	unbondingTime, err := k.UnbondingTime(ctx)
-	if err != nil {
-		return time.Time{}, math.Int{}, err
-	}
+	//unbondingTime, err := k.UnbondingTime(ctx)
+	//if err != nil {
+	//	return time.Time{}, math.Int{}, err
+	//}
 
-	headerInfo := k.HeaderService.HeaderInfo(ctx)
-	completionTime := headerInfo.Time.Add(unbondingTime)
-	ubd, err := k.SetUnbondingDelegationEntry(ctx, delAddr, valAddr, headerInfo.Height, completionTime, returnAmount)
-	if err != nil {
-		return time.Time{}, math.Int{}, err
-	}
+	//headerInfo := k.HeaderService.HeaderInfo(ctx)
+	//completionTime := headerInfo.Time.Add(unbondingTime)
+	//ubd, err := k.SetUnbondingDelegationEntry(ctx, delAddr, valAddr, headerInfo.Height, completionTime, returnAmount)
+	//if err != nil {
+	//	return time.Time{}, math.Int{}, err
+	//}
 
-	err = k.InsertUBDQueue(ctx, ubd, completionTime)
-	if err != nil {
-		return time.Time{}, math.Int{}, err
-	}
+	//err = k.InsertUBDQueue(ctx, ubd, completionTime)
+	//if err != nil {
+	//	return time.Time{}, math.Int{}, err
+	//}
 
-	return completionTime, returnAmount, nil
+	//return completionTime, returnAmount, nil
+	return time.Time{}, nil
 }
 
 // CompleteUnbonding completes the unbonding of all mature entries in the
 // retrieved unbonding delegation object and returns the total unbonding balance
 // or an error upon failure.
-func (k Keeper) CompleteUnbonding(ctx context.Context, delAddr sdk.AccAddress, valAddr sdk.ValAddress) (sdk.Coins, error) {
-	ubd, err := k.GetUnbondingDelegation(ctx, delAddr, valAddr)
-	if err != nil {
-		return nil, err
-	}
-
-	bondDenom, err := k.BondDenom(ctx)
-	if err != nil {
-		return nil, err
-	}
-
-	balances := sdk.NewCoins()
-	headerInfo := k.HeaderService.HeaderInfo(ctx)
-	ctxTime := headerInfo.Time
-
-	delegatorAddress, err := k.authKeeper.AddressCodec().StringToBytes(ubd.DelegatorAddress)
-	if err != nil {
-		return nil, err
-	}
-
-	// loop through all the entries and complete unbonding mature entries
-	for i := 0; i < len(ubd.Entries); i++ {
-		entry := ubd.Entries[i]
-		if entry.IsMature(ctxTime) {
-			ubd.RemoveEntry(int64(i))
-			i--
-
-			// track undelegation only when remaining or truncated shares are non-zero
-			if !entry.Balance.IsZero() {
-				amt := sdk.NewCoin(bondDenom, entry.Balance)
-				if err := k.bankKeeper.UndelegateCoinsFromModuleToAccount(
-					ctx, types.NotBondedPoolName, delegatorAddress, sdk.NewCoins(amt),
-				); err != nil {
-					return nil, err
-				}
-
-				balances = balances.Add(amt)
-			}
-		}
-	}
-
-	// set the unbonding delegation or remove it if there are no more entries
-	if len(ubd.Entries) == 0 {
-		err = k.RemoveUnbondingDelegation(ctx, ubd)
-	} else {
-		err = k.SetUnbondingDelegation(ctx, ubd)
-	}
-
-	if err != nil {
-		return nil, err
-	}
-
-	return balances, nil
-}
+//func (k Keeper) CompleteUnbonding(ctx context.Context, delAddr sdk.AccAddress, valAddr sdk.ValAddress) (sdk.Coins, error) {
+//	ubd, err := k.GetUnbondingDelegation(ctx, delAddr, valAddr)
+//	if err != nil {
+//		return nil, err
+//	}
+//
+//	bondDenom, err := k.BondDenom(ctx)
+//	if err != nil {
+//		return nil, err
+//	}
+//
+//	balances := sdk.NewCoins()
+//	headerInfo := k.HeaderService.HeaderInfo(ctx)
+//	ctxTime := headerInfo.Time
+//
+//	delegatorAddress, err := k.authKeeper.AddressCodec().StringToBytes(ubd.DelegatorAddress)
+//	if err != nil {
+//		return nil, err
+//	}
+//
+//	// loop through all the entries and complete unbonding mature entries
+//	for i := 0; i < len(ubd.Entries); i++ {
+//		entry := ubd.Entries[i]
+//		if entry.IsMature(ctxTime) {
+//			ubd.RemoveEntry(int64(i))
+//			i--
+//
+//			// track undelegation only when remaining or truncated shares are non-zero
+//			if !entry.Balance.IsZero() {
+//				amt := sdk.NewCoin(bondDenom, entry.Balance)
+//				if err := k.bankKeeper.UndelegateCoinsFromModuleToAccount(
+//					ctx, types.NotBondedPoolName, delegatorAddress, sdk.NewCoins(amt),
+//				); err != nil {
+//					return nil, err
+//				}
+//
+//				balances = balances.Add(amt)
+//			}
+//		}
+//	}
+//
+//	// set the unbonding delegation or remove it if there are no more entries
+//	if len(ubd.Entries) == 0 {
+//		err = k.RemoveUnbondingDelegation(ctx, ubd)
+//	} else {
+//		err = k.SetUnbondingDelegation(ctx, ubd)
+//	}
+//
+//	if err != nil {
+//		return nil, err
+//	}
+//
+//	return balances, nil
+//}
 
 // BeginRedelegation begins unbonding / redelegation and creates a redelegation
 // record.
@@ -1131,45 +1131,45 @@ func (k Keeper) CompleteUnbonding(ctx context.Context, delAddr sdk.AccAddress, v
 // ValidateUnbondAmount validates that a given unbond or redelegation amount is
 // valid based on upon the converted shares. If the amount is valid, the total
 // amount of respective shares is returned, otherwise an error is returned.
-func (k Keeper) ValidateUnbondAmount(
-	ctx context.Context, delAddr sdk.AccAddress, valAddr sdk.ValAddress, amt math.Int,
-) (shares math.LegacyDec, err error) {
-	validator, err := k.GetValidator(ctx, valAddr)
-	if err != nil {
-		return shares, err
-	}
+//func (k Keeper) ValidateUnbondAmount(
+//	ctx context.Context, delAddr sdk.AccAddress, valAddr sdk.ValAddress, amt math.Int,
+//) (shares math.LegacyDec, err error) {
+//validator, err := k.GetValidator(ctx, valAddr)
+//if err != nil {
+//	return shares, err
+//}
 
-	del, err := k.Delegations.Get(ctx, collections.Join(delAddr, valAddr))
-	if err != nil {
-		return shares, err
-	}
+//del, err := k.Delegations.Get(ctx, collections.Join(delAddr, valAddr))
+//if err != nil {
+//	return shares, err
+//}
 
-	shares, err = validator.SharesFromTokens(amt)
-	if err != nil {
-		return shares, err
-	}
+//shares, err = validator.SharesFromTokens(amt)
+//if err != nil {
+//	return shares, err
+//}
+//
+//sharesTruncated, err := validator.SharesFromTokensTruncated(amt)
+//if err != nil {
+//	return shares, err
+//}
+//
+//delShares := del.GetShares()
+//if sharesTruncated.GT(delShares) {
+//	return shares, errorsmod.Wrap(sdkerrors.ErrInvalidRequest, "invalid shares amount")
+//}
 
-	sharesTruncated, err := validator.SharesFromTokensTruncated(amt)
-	if err != nil {
-		return shares, err
-	}
+// Depending on the share, amount can be smaller than unit amount(1stake).
+// If the remain amount after unbonding is smaller than the minimum share,
+// it's completely unbonded to avoid leaving dust shares.
+//tolerance, err := validator.SharesFromTokens(math.OneInt())
+//if err != nil {
+//	return shares, err
+//}
 
-	delShares := del.GetShares()
-	if sharesTruncated.GT(delShares) {
-		return shares, errorsmod.Wrap(sdkerrors.ErrInvalidRequest, "invalid shares amount")
-	}
+//if delShares.Sub(shares).LT(tolerance) {
+//	shares = delShares
+//}
 
-	// Depending on the share, amount can be smaller than unit amount(1stake).
-	// If the remain amount after unbonding is smaller than the minimum share,
-	// it's completely unbonded to avoid leaving dust shares.
-	tolerance, err := validator.SharesFromTokens(math.OneInt())
-	if err != nil {
-		return shares, err
-	}
-
-	if delShares.Sub(shares).LT(tolerance) {
-		shares = delShares
-	}
-
-	return shares, nil
-}
+//return shares, nil
+//}

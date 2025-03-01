@@ -124,62 +124,99 @@ func (k Keeper) SetNewValidatorByPowerIndex(ctx context.Context, validator types
 	return store.Set(types.GetValidatorsByPowerIndexKey(validator, k.PowerReduction(ctx), k.validatorAddressCodec), str)
 }
 
-// AddValidatorTokensAndShares updates the tokens of an existing validator, updates the validators power index key
-func (k Keeper) AddValidatorTokensAndShares(ctx context.Context, validator types.Validator,
-	tokensToAdd math.Int,
-) (valOut types.Validator, addedShares math.LegacyDec, err error) {
-	err = k.DeleteValidatorByPowerIndex(ctx, validator)
+func (k Keeper) AddValidatorCapital(ctx context.Context, validator types.Validator, capital types.Capital) (types.Validator, error) {
+	err := k.DeleteValidatorByPowerIndex(ctx, validator)
 	if err != nil {
-		return valOut, addedShares, err
+		return validator, err
 	}
 
-	validator, addedShares = validator.AddTokensFromDel(tokensToAdd)
+	validator = validator.AddCapitalFromDel(capital)
 	err = k.SetValidator(ctx, validator)
 	if err != nil {
-		return validator, addedShares, err
+		return validator, err
 	}
 
 	err = k.SetValidatorByPowerIndex(ctx, validator)
-	return validator, addedShares, err
+	return validator, err
 }
+
+func (k Keeper) RemoveValidatorCapital(ctx context.Context, validator types.Validator,
+	capital types.Capital,
+) (types.Validator, error) {
+	err := k.DeleteValidatorByPowerIndex(ctx, validator)
+	if err != nil {
+		return validator, err
+	}
+	validator, err = validator.RemoveDelCapital(capital)
+	if err != nil {
+		return validator, err
+	}
+
+	err = k.SetValidator(ctx, validator)
+	if err != nil {
+		return validator, err
+	}
+
+	err = k.SetValidatorByPowerIndex(ctx, validator)
+	return validator, err
+}
+
+// AddValidatorTokensAndShares updates the tokens of an existing validator, updates the validators power index key
+//func (k Keeper) AddValidatorTokensAndShares(ctx context.Context, validator types.Validator,
+//	tokensToAdd math.Int,
+//) (valOut types.Validator, addedShares math.LegacyDec, err error) {
+//	err = k.DeleteValidatorByPowerIndex(ctx, validator)
+//	if err != nil {
+//		return valOut, addedShares, err
+//	}
+//
+//	validator, addedShares = validator.AddTokensFromDel(tokensToAdd)
+//	err = k.SetValidator(ctx, validator)
+//	if err != nil {
+//		return validator, addedShares, err
+//	}
+//
+//	err = k.SetValidatorByPowerIndex(ctx, validator)
+//	return validator, addedShares, err
+//}
 
 // RemoveValidatorTokensAndShares updates the tokens of an existing validator, updates the validators power index key
-func (k Keeper) RemoveValidatorTokensAndShares(ctx context.Context, validator types.Validator,
-	sharesToRemove math.LegacyDec,
-) (valOut types.Validator, removedTokens math.Int, err error) {
-	err = k.DeleteValidatorByPowerIndex(ctx, validator)
-	if err != nil {
-		return valOut, removedTokens, err
-	}
-	validator, removedTokens = validator.RemoveDelShares(sharesToRemove)
-	err = k.SetValidator(ctx, validator)
-	if err != nil {
-		return validator, removedTokens, err
-	}
-
-	err = k.SetValidatorByPowerIndex(ctx, validator)
-	return validator, removedTokens, err
-}
+//func (k Keeper) RemoveValidatorTokensAndShares(ctx context.Context, validator types.Validator,
+//	sharesToRemove math.LegacyDec,
+//) (valOut types.Validator, removedTokens math.Int, err error) {
+//	err = k.DeleteValidatorByPowerIndex(ctx, validator)
+//	if err != nil {
+//		return valOut, removedTokens, err
+//	}
+//	validator, removedTokens = validator.RemoveDelShares(sharesToRemove)
+//	err = k.SetValidator(ctx, validator)
+//	if err != nil {
+//		return validator, removedTokens, err
+//	}
+//
+//	err = k.SetValidatorByPowerIndex(ctx, validator)
+//	return validator, removedTokens, err
+//}
 
 // RemoveValidatorTokens updates the tokens of an existing validator, updates the validators power index key
-func (k Keeper) RemoveValidatorTokens(ctx context.Context,
-	validator types.Validator, tokensToRemove math.Int,
-) (types.Validator, error) {
-	if err := k.DeleteValidatorByPowerIndex(ctx, validator); err != nil {
-		return validator, err
-	}
-
-	validator = validator.RemoveTokens(tokensToRemove)
-	if err := k.SetValidator(ctx, validator); err != nil {
-		return validator, err
-	}
-
-	if err := k.SetValidatorByPowerIndex(ctx, validator); err != nil {
-		return validator, err
-	}
-
-	return validator, nil
-}
+//func (k Keeper) RemoveValidatorTokens(ctx context.Context,
+//	validator types.Validator, tokensToRemove math.Int,
+//) (types.Validator, error) {
+//	if err := k.DeleteValidatorByPowerIndex(ctx, validator); err != nil {
+//		return validator, err
+//	}
+//
+//	validator = validator.RemoveTokens(tokensToRemove)
+//	if err := k.SetValidator(ctx, validator); err != nil {
+//		return validator, err
+//	}
+//
+//	if err := k.SetValidatorByPowerIndex(ctx, validator); err != nil {
+//		return validator, err
+//	}
+//
+//	return validator, nil
+//}
 
 // UpdateValidatorCommission attempts to update a validator's commission rate.
 // An error is returned if the new commission rate is invalid.
@@ -221,8 +258,8 @@ func (k Keeper) RemoveValidator(ctx context.Context, address sdk.ValAddress) err
 		return types.ErrBadRemoveValidator.Wrap("cannot call RemoveValidator on bonded or unbonding validators")
 	}
 
-	if validator.Tokens.IsPositive() {
-		return types.ErrBadRemoveValidator.Wrap("attempting to remove a validator which still contains tokens")
+	if validator.Capital.IsPositive() {
+		return types.ErrBadRemoveValidator.Wrap("attempting to remove a validator which still contains capital")
 	}
 
 	valConsAddr, err := validator.GetConsAddr()
@@ -257,6 +294,31 @@ func (k Keeper) RemoveValidator(ctx context.Context, address sdk.ValAddress) err
 }
 
 // get groups of validators
+
+func (k Keeper) ValidatorsByStrategyID(ctx context.Context, strategyID uint64) (validators []types.Validator, err error) {
+	store := k.KVStoreService.OpenKVStore(ctx)
+
+	iterator, err := store.Iterator(types.ValidatorsKey, storetypes.PrefixEndBytes(types.ValidatorsKey))
+	if err != nil {
+		return nil, err
+	}
+	defer iterator.Close()
+
+	for ; iterator.Valid(); iterator.Next() {
+		validator, err := types.UnmarshalValidator(k.cdc, iterator.Value())
+		if err != nil {
+			return nil, err
+		}
+		if validator.Meta.StrategyID == strategyID {
+			validators = append(validators, validator)
+		}
+	}
+
+	// TODO: remove
+	k.Logger.Debug("call validatorsByStrategyID", "validators", validators)
+
+	return validators, nil
+}
 
 // GetAllValidators gets the set of all validators with no limits, used during genesis dump
 func (k Keeper) GetAllValidators(ctx context.Context) (validators []types.Validator, err error) {
@@ -549,7 +611,7 @@ func (k Keeper) unbondMatureValidators(
 		if err != nil {
 			return err
 		}
-		if val.GetDelegatorShares().IsZero() {
+		if val.Capital.IsZero() {
 			addr, err := k.validatorAddressCodec.StringToBytes(val.OperatorAddress)
 			if err != nil {
 				return err

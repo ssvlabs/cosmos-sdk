@@ -218,8 +218,11 @@ func (k Keeper) getCurrentValidators(ctx context.Context) (map[string]v1.Validat
 		}
 		currValidators[validator.GetOperator()] = v1.NewValidatorGovInfo(
 			valBz,
-			validator.GetBondedTokens(),
-			validator.GetDelegatorShares(),
+			// TODO: adjust gov voting power calculation later
+			//validator.GetBondedTokens(),
+			//validator.GetDelegatorShares(),
+			math.ZeroInt(),
+			math.LegacyZeroDec(),
 			math.LegacyZeroDec(),
 			v1.WeightedVoteOptions{},
 		)

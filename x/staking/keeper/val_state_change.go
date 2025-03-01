@@ -11,14 +11,14 @@ import (
 
 	"cosmossdk.io/core/address"
 	"cosmossdk.io/core/appmodule"
-	"cosmossdk.io/core/event"
-	errorsmod "cosmossdk.io/errors"
+	//"cosmossdk.io/core/event"
+	//errorsmod "cosmossdk.io/errors"
 	"cosmossdk.io/math"
 	"cosmossdk.io/x/staking/types"
 
-	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
+	//cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+	//sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 )
 
 // BlockValidatorUpdates calculates the ValidatorUpdates for the current block
@@ -39,42 +39,42 @@ func (k Keeper) BlockValidatorUpdates(ctx context.Context) ([]appmodule.Validato
 	}
 
 	// unbond all mature validators from the unbonding queue
-	err = k.UnbondAllMatureValidators(ctx)
-	if err != nil {
-		return nil, err
-	}
+	//err = k.UnbondAllMatureValidators(ctx)
+	//if err != nil {
+	//	return nil, err
+	//}
 
-	time := k.HeaderService.HeaderInfo(ctx).Time
+	//time := k.HeaderService.HeaderInfo(ctx).Time
 	// Remove all mature unbonding delegations from the ubd queue.
-	matureUnbonds, err := k.DequeueAllMatureUBDQueue(ctx, time)
-	if err != nil {
-		return nil, err
-	}
-
-	for _, dvPair := range matureUnbonds {
-		addr, err := k.validatorAddressCodec.StringToBytes(dvPair.ValidatorAddress)
-		if err != nil {
-			return nil, err
-		}
-		delegatorAddress, err := k.authKeeper.AddressCodec().StringToBytes(dvPair.DelegatorAddress)
-		if err != nil {
-			return nil, err
-		}
-
-		balances, err := k.CompleteUnbonding(ctx, delegatorAddress, addr)
-		if err != nil {
-			continue
-		}
-
-		if err := k.EventService.EventManager(ctx).EmitKV(
-			types.EventTypeCompleteUnbonding,
-			event.NewAttribute(sdk.AttributeKeyAmount, balances.String()),
-			event.NewAttribute(types.AttributeKeyValidator, dvPair.ValidatorAddress),
-			event.NewAttribute(types.AttributeKeyDelegator, dvPair.DelegatorAddress),
-		); err != nil {
-			return nil, err
-		}
-	}
+	//matureUnbonds, err := k.DequeueAllMatureUBDQueue(ctx, time)
+	//if err != nil {
+	//	return nil, err
+	//}
+	//
+	//for _, dvPair := range matureUnbonds {
+	//	addr, err := k.validatorAddressCodec.StringToBytes(dvPair.ValidatorAddress)
+	//	if err != nil {
+	//		return nil, err
+	//	}
+	//	delegatorAddress, err := k.authKeeper.AddressCodec().StringToBytes(dvPair.DelegatorAddress)
+	//	if err != nil {
+	//		return nil, err
+	//	}
+	//
+	//	balances, err := k.CompleteUnbonding(ctx, delegatorAddress, addr)
+	//	if err != nil {
+	//		continue
+	//	}
+	//
+	//	if err := k.EventService.EventManager(ctx).EmitKV(
+	//		types.EventTypeCompleteUnbonding,
+	//		event.NewAttribute(sdk.AttributeKeyAmount, balances.String()),
+	//		event.NewAttribute(types.AttributeKeyValidator, dvPair.ValidatorAddress),
+	//		event.NewAttribute(types.AttributeKeyDelegator, dvPair.DelegatorAddress),
+	//	); err != nil {
+	//		return nil, err
+	//	}
+	//}
 
 	// Remove all mature redelegations from the red queue.
 	//matureRedelegations, err := k.DequeueAllMatureRedelegationQueue(ctx, time)
@@ -117,10 +117,10 @@ func (k Keeper) BlockValidatorUpdates(ctx context.Context) ([]appmodule.Validato
 	//	}
 	//}
 
-	err = k.PurgeAllMaturedConsKeyRotatedKeys(ctx, time)
-	if err != nil {
-		return nil, err
-	}
+	//err = k.PurgeAllMaturedConsKeyRotatedKeys(ctx, time)
+	//if err != nil {
+	//	return nil, err
+	//}
 
 	return validatorUpdates, nil
 }
@@ -145,7 +145,7 @@ func (k Keeper) ApplyAndReturnValidatorSetUpdates(ctx context.Context) ([]appmod
 	maxValidators := params.MaxValidators
 	powerReduction := k.PowerReduction(ctx)
 	totalPower := math.ZeroInt()
-	amtFromBondedToNotBonded, amtFromNotBondedToBonded := math.ZeroInt(), math.ZeroInt()
+	//amtFromBondedToNotBonded, amtFromNotBondedToBonded := math.ZeroInt(), math.ZeroInt()
 
 	// Retrieve the last validator set.
 	// The persistent set is updated later in this function.
@@ -189,13 +189,13 @@ func (k Keeper) ApplyAndReturnValidatorSetUpdates(ctx context.Context) ([]appmod
 			if err != nil {
 				return nil, err
 			}
-			amtFromNotBondedToBonded = amtFromNotBondedToBonded.Add(validator.GetTokens())
+			//amtFromNotBondedToBonded = amtFromNotBondedToBonded.Add(validator.GetTokens())
 		case validator.IsUnbonding():
 			validator, err = k.unbondingToBonded(ctx, validator)
 			if err != nil {
 				return nil, err
 			}
-			amtFromNotBondedToBonded = amtFromNotBondedToBonded.Add(validator.GetTokens())
+			//amtFromNotBondedToBonded = amtFromNotBondedToBonded.Add(validator.GetTokens())
 		case validator.IsBonded():
 			// no state change
 		default:
@@ -235,18 +235,18 @@ func (k Keeper) ApplyAndReturnValidatorSetUpdates(ctx context.Context) ([]appmod
 		if err != nil {
 			return nil, fmt.Errorf("validator record not found for address: %X", sdk.ValAddress(valAddrBytes))
 		}
-		validator, err = k.bondedToUnbonding(ctx, validator)
-		if err != nil {
-			return nil, err
-		}
-		str, err := k.validatorAddressCodec.StringToBytes(validator.GetOperator())
-		if err != nil {
-			return nil, err
-		}
-		amtFromBondedToNotBonded = amtFromBondedToNotBonded.Add(validator.GetTokens())
-		if err = k.DeleteLastValidatorPower(ctx, str); err != nil {
-			return nil, err
-		}
+		//validator, err = k.bondedToUnbonding(ctx, validator)
+		//if err != nil {
+		//	return nil, err
+		//}
+		//str, err := k.validatorAddressCodec.StringToBytes(validator.GetOperator())
+		//if err != nil {
+		//	return nil, err
+		//}
+		//amtFromBondedToNotBonded = amtFromBondedToNotBonded.Add(validator.GetTokens())
+		//if err = k.DeleteLastValidatorPower(ctx, str); err != nil {
+		//	return nil, err
+		//}
 
 		updates = append(updates, validator.ModuleValidatorUpdateZero())
 	}
@@ -254,76 +254,76 @@ func (k Keeper) ApplyAndReturnValidatorSetUpdates(ctx context.Context) ([]appmod
 	// ApplyAndReturnValidatorSetUpdates checks if there is ConsPubKeyRotationHistory
 	// with ConsPubKeyRotationHistory.RotatedHeight == ctx.BlockHeight() and if so, generates 2 ValidatorUpdate,
 	// one for a remove validator and one for create new validator
-	historyObjects, err := k.GetBlockConsPubKeyRotationHistory(ctx)
-	if err != nil {
-		return nil, err
-	}
+	//historyObjects, err := k.GetBlockConsPubKeyRotationHistory(ctx)
+	//if err != nil {
+	//	return nil, err
+	//}
 
-	for _, history := range historyObjects {
-		valAddr := history.OperatorAddress
-		validator, err := k.GetValidator(ctx, valAddr)
-		if err != nil {
-			return nil, err
-		}
-
-		oldPkCached := history.OldConsPubkey.GetCachedValue()
-		if oldPkCached == nil {
-			return nil, errorsmod.Wrap(sdkerrors.ErrInvalidType, "OldConsPubkey cached value is nil")
-		}
-		oldPk, ok := oldPkCached.(cryptotypes.PubKey)
-		if !ok {
-			return nil, errorsmod.Wrapf(sdkerrors.ErrInvalidType, "Expecting cryptotypes.PubKey, got %T", oldPkCached)
-		}
-
-		newPkCached := history.NewConsPubkey.GetCachedValue()
-		if newPkCached == nil {
-			return nil, errorsmod.Wrap(sdkerrors.ErrInvalidType, "NewConsPubkey cached value is nil")
-		}
-		newPk, ok := newPkCached.(cryptotypes.PubKey)
-		if !ok {
-			return nil, errorsmod.Wrapf(sdkerrors.ErrInvalidType, "Expecting cryptotypes.PubKey, got %T", newPkCached)
-		}
-
-		// a validator cannot rotate keys if it's not bonded or if it's jailed
-		// - a validator can be unbonding state but jailed status false
-		// - a validator can be jailed and status can be unbonding
-		if !(validator.Jailed || validator.Status != types.Bonded) {
-			updates = append(updates, appmodule.ValidatorUpdate{
-				PubKey:     oldPk.Bytes(),
-				PubKeyType: oldPk.Type(),
-				Power:      0,
-			})
-
-			updates = append(updates, appmodule.ValidatorUpdate{
-				PubKey:     newPk.Bytes(),
-				PubKeyType: newPk.Type(),
-				Power:      validator.ConsensusPower(powerReduction),
-			})
-
-			if err := k.updateToNewPubkey(ctx, validator, history.OldConsPubkey, history.NewConsPubkey, history.Fee); err != nil {
-				return nil, err
-			}
-		}
-	}
+	//for _, history := range historyObjects {
+	//	valAddr := history.OperatorAddress
+	//	validator, err := k.GetValidator(ctx, valAddr)
+	//	if err != nil {
+	//		return nil, err
+	//	}
+	//
+	//	oldPkCached := history.OldConsPubkey.GetCachedValue()
+	//	if oldPkCached == nil {
+	//		return nil, errorsmod.Wrap(sdkerrors.ErrInvalidType, "OldConsPubkey cached value is nil")
+	//	}
+	//	oldPk, ok := oldPkCached.(cryptotypes.PubKey)
+	//	if !ok {
+	//		return nil, errorsmod.Wrapf(sdkerrors.ErrInvalidType, "Expecting cryptotypes.PubKey, got %T", oldPkCached)
+	//	}
+	//
+	//	newPkCached := history.NewConsPubkey.GetCachedValue()
+	//	if newPkCached == nil {
+	//		return nil, errorsmod.Wrap(sdkerrors.ErrInvalidType, "NewConsPubkey cached value is nil")
+	//	}
+	//	newPk, ok := newPkCached.(cryptotypes.PubKey)
+	//	if !ok {
+	//		return nil, errorsmod.Wrapf(sdkerrors.ErrInvalidType, "Expecting cryptotypes.PubKey, got %T", newPkCached)
+	//	}
+	//
+	//	// a validator cannot rotate keys if it's not bonded or if it's jailed
+	//	// - a validator can be unbonding state but jailed status false
+	//	// - a validator can be jailed and status can be unbonding
+	//	if !(validator.Jailed || validator.Status != types.Bonded) {
+	//		updates = append(updates, appmodule.ValidatorUpdate{
+	//			PubKey:     oldPk.Bytes(),
+	//			PubKeyType: oldPk.Type(),
+	//			Power:      0,
+	//		})
+	//
+	//		updates = append(updates, appmodule.ValidatorUpdate{
+	//			PubKey:     newPk.Bytes(),
+	//			PubKeyType: newPk.Type(),
+	//			Power:      validator.ConsensusPower(powerReduction),
+	//		})
+	//
+	//		if err := k.updateToNewPubkey(ctx, validator, history.OldConsPubkey, history.NewConsPubkey, history.Fee); err != nil {
+	//			return nil, err
+	//		}
+	//	}
+	//}
 
 	// Update the pools based on the recent updates in the validator set:
 	// - The tokens from the non-bonded candidates that enter the new validator set need to be transferred
 	// to the Bonded pool.
 	// - The tokens from the bonded validators that are being kicked out from the validator set
 	// need to be transferred to the NotBonded pool.
-	switch {
+	//switch {
 	// Compare and subtract the respective amounts to only perform one transfer.
 	// This is done in order to avoid doing multiple updates inside each iterator/loop.
-	case amtFromNotBondedToBonded.GT(amtFromBondedToNotBonded):
-		if err = k.notBondedTokensToBonded(ctx, amtFromNotBondedToBonded.Sub(amtFromBondedToNotBonded)); err != nil {
-			return nil, err
-		}
-	case amtFromNotBondedToBonded.LT(amtFromBondedToNotBonded):
-		if err = k.bondedTokensToNotBonded(ctx, amtFromBondedToNotBonded.Sub(amtFromNotBondedToBonded)); err != nil {
-			return nil, err
-		}
-	default: // equal amounts of tokens; no update required
-	}
+	//case amtFromNotBondedToBonded.GT(amtFromBondedToNotBonded):
+	//	if err = k.notBondedTokensToBonded(ctx, amtFromNotBondedToBonded.Sub(amtFromBondedToNotBonded)); err != nil {
+	//		return nil, err
+	//	}
+	//case amtFromNotBondedToBonded.LT(amtFromBondedToNotBonded):
+	//	if err = k.bondedTokensToNotBonded(ctx, amtFromBondedToNotBonded.Sub(amtFromNotBondedToBonded)); err != nil {
+	//		return nil, err
+	//	}
+	//default: // equal amounts of tokens; no update required
+	//}
 
 	// set total power on lookup index if there are any updates
 	if len(updates) > 0 {

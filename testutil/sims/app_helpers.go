@@ -238,12 +238,12 @@ func GenesisStateWithValSet(
 		}
 
 		validator := stakingtypes.Validator{
-			OperatorAddress:   sdk.ValAddress(val.Address).String(),
-			ConsensusPubkey:   pkAny,
-			Jailed:            false,
-			Status:            stakingtypes.Bonded,
-			Tokens:            bondAmt,
-			DelegatorShares:   sdkmath.LegacyOneDec(),
+			OperatorAddress: sdk.ValAddress(val.Address).String(),
+			ConsensusPubkey: pkAny,
+			Jailed:          false,
+			Status:          stakingtypes.Bonded,
+			//Tokens:            bondAmt,
+			//DelegatorShares:   sdkmath.LegacyOneDec(),
 			Description:       stakingtypes.Description{},
 			UnbondingHeight:   int64(0),
 			UnbondingTime:     time.Unix(0, 0).UTC(),

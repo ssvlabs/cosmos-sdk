@@ -2,6 +2,7 @@ package keeper
 
 import (
 	"context"
+	"cosmossdk.io/math"
 	"errors"
 	"strings"
 
@@ -574,20 +575,20 @@ func queryAllRedelegations(ctx context.Context, k Querier, req *types.QueryRedel
 // util
 
 func delegationToDelegationResponse(ctx context.Context, k *Keeper, del types.Delegation) (types.DelegationResponse, error) {
-	valAddr, err := k.validatorAddressCodec.StringToBytes(del.GetValidatorAddr())
-	if err != nil {
-		return types.DelegationResponse{}, err
-	}
+	//valAddr, err := k.validatorAddressCodec.StringToBytes(del.GetValidatorAddr())
+	//if err != nil {
+	//	return types.DelegationResponse{}, err
+	//}
+	//
+	//val, err := k.GetValidator(ctx, valAddr)
+	//if err != nil {
+	//	return types.DelegationResponse{}, err
+	//}
 
-	val, err := k.GetValidator(ctx, valAddr)
-	if err != nil {
-		return types.DelegationResponse{}, err
-	}
-
-	_, err = k.authKeeper.AddressCodec().StringToBytes(del.DelegatorAddress)
-	if err != nil {
-		return types.DelegationResponse{}, err
-	}
+	//_, err = k.authKeeper.AddressCodec().StringToBytes(del.DelegatorAddress)
+	//if err != nil {
+	//	return types.DelegationResponse{}, err
+	//}
 
 	bondDenom, err := k.BondDenom(ctx)
 	if err != nil {
@@ -598,7 +599,8 @@ func delegationToDelegationResponse(ctx context.Context, k *Keeper, del types.De
 		del.DelegatorAddress,
 		del.GetValidatorAddr(),
 		del.Shares,
-		sdk.NewCoin(bondDenom, val.TokensFromShares(del.Shares).TruncateInt()),
+		sdk.NewCoin(bondDenom, math.ZeroInt()),
+		//sdk.NewCoin(bondDenom, val.TokensFromShares(del.Shares).TruncateInt()),
 	), nil
 }
 
@@ -625,20 +627,20 @@ func redelegationsToRedelegationResponses(ctx context.Context, k *Keeper, redels
 		if err != nil {
 			return nil, err
 		}
-		valDstAddr, err := k.validatorAddressCodec.StringToBytes(redel.ValidatorDstAddress)
-		if err != nil {
-			return nil, err
-		}
+		//valDstAddr, err := k.validatorAddressCodec.StringToBytes(redel.ValidatorDstAddress)
+		//if err != nil {
+		//	return nil, err
+		//}
 
 		_, err = k.authKeeper.AddressCodec().StringToBytes(redel.DelegatorAddress)
 		if err != nil {
 			return nil, err
 		}
 
-		val, err := k.GetValidator(ctx, valDstAddr)
-		if err != nil {
-			return nil, err
-		}
+		//val, err := k.GetValidator(ctx, valDstAddr)
+		//if err != nil {
+		//	return nil, err
+		//}
 
 		entryResponses := make([]types.RedelegationEntryResponse, len(redel.Entries))
 		for j, entry := range redel.Entries {
@@ -647,7 +649,8 @@ func redelegationsToRedelegationResponses(ctx context.Context, k *Keeper, redels
 				entry.CompletionTime,
 				entry.SharesDst,
 				entry.InitialBalance,
-				val.TokensFromShares(entry.SharesDst).TruncateInt(),
+				math.ZeroInt(),
+				//val.TokensFromShares(entry.SharesDst).TruncateInt(),
 			)
 		}
 

@@ -142,12 +142,12 @@ func (AppModule) ProposalMsgsX(weights simsx.WeightSource, reg simsx.Registry) {
 }
 
 // WeightedOperationsX returns the all the staking module operations with their respective weights.
-func (am AppModule) WeightedOperationsX(weights simsx.WeightSource, reg simsx.Registry) {
-	reg.Add(weights.Get("msg_create_validator", 100), simulation.MsgCreateValidatorFactory(am.keeper))
-	reg.Add(weights.Get("msg_delegate", 100), simulation.MsgDelegateFactory(am.keeper))
-	reg.Add(weights.Get("msg_undelegate", 100), simulation.MsgUndelegateFactory(am.keeper))
-	reg.Add(weights.Get("msg_edit_validator", 5), simulation.MsgEditValidatorFactory(am.keeper))
-	reg.Add(weights.Get("msg_begin_redelegate", 100), simulation.MsgBeginRedelegateFactory(am.keeper))
-	reg.Add(weights.Get("msg_cancel_unbonding_delegation", 100), simulation.MsgCancelUnbondingDelegationFactory(am.keeper))
-	reg.Add(weights.Get("msg_rotate_cons_pubkey", 100), simulation.MsgRotateConsPubKeyFactory(am.keeper))
-}
+//func (am AppModule) WeightedOperationsX(weights simsx.WeightSource, reg simsx.Registry) {
+//	reg.Add(weights.Get("msg_create_validator", 100), simulation.MsgCreateValidatorFactory(am.keeper))
+//	reg.Add(weights.Get("msg_delegate", 100), simulation.MsgDelegateFactory(am.keeper))
+//	reg.Add(weights.Get("msg_undelegate", 100), simulation.MsgUndelegateFactory(am.keeper))
+//	reg.Add(weights.Get("msg_edit_validator", 5), simulation.MsgEditValidatorFactory(am.keeper))
+//	reg.Add(weights.Get("msg_begin_redelegate", 100), simulation.MsgBeginRedelegateFactory(am.keeper))
+//reg.Add(weights.Get("msg_cancel_unbonding_delegation", 100), simulation.MsgCancelUnbondingDelegationFactory(am.keeper))
+//reg.Add(weights.Get("msg_rotate_cons_pubkey", 100), simulation.MsgRotateConsPubKeyFactory(am.keeper))
+//}

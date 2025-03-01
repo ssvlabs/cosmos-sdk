@@ -18,14 +18,14 @@ service Msg {
   option (cosmos.msg.v1.service) = true;
 
   // CreateValidator defines a method for creating a new validator.
-  rpc CreateValidator(MsgCreateValidator) returns (MsgCreateValidatorResponse);
+  //  rpc CreateValidator(MsgCreateValidator) returns (MsgCreateValidatorResponse);
 
   // EditValidator defines a method for editing an existing validator.
   rpc EditValidator(MsgEditValidator) returns (MsgEditValidatorResponse);
 
   // Delegate defines a method for performing a delegation of coins
   // from a delegator to a validator.
-  rpc Delegate(MsgDelegate) returns (MsgDelegateResponse);
+  //  rpc Delegate(MsgDelegate) returns (MsgDelegateResponse);
 
   // BeginRedelegate defines a method for performing a redelegation
   // of coins from a delegator and source validator to a destination validator.
@@ -33,13 +33,13 @@ service Msg {
 
   // Undelegate defines a method for performing an undelegation from a
   // delegate and a validator.
-  rpc Undelegate(MsgUndelegate) returns (MsgUndelegateResponse);
+  //  rpc Undelegate(MsgUndelegate) returns (MsgUndelegateResponse);
 
   // CancelUnbondingDelegation defines a method for performing canceling the unbonding delegation
   // and delegate back to previous validator.
-  rpc CancelUnbondingDelegation(MsgCancelUnbondingDelegation) returns (MsgCancelUnbondingDelegationResponse) {
-    option (cosmos_proto.method_added_in) = "cosmos-sdk 0.46";
-  }
+  //  rpc CancelUnbondingDelegation(MsgCancelUnbondingDelegation) returns (MsgCancelUnbondingDelegationResponse) {
+  //    option (cosmos_proto.method_added_in) = "cosmos-sdk 0.46";
+  //  }
 
   // UpdateParams defines an operation for updating the x/staking module
   // parameters.
@@ -49,19 +49,9 @@ service Msg {
 
   // RotateConsPubKey defines an operation for rotating the consensus keys
   // of a validator.
-  rpc RotateConsPubKey(MsgRotateConsPubKey) returns (MsgRotateConsPubKeyResponse) {
-    option (cosmos_proto.method_added_in) = "cosmos-sdk 0.51";
-  }
-}
-
-message Capital {
-  repeated TokenBalance slashable_balance     = 1 [(gogoproto.nullable) = false, (amino.dont_omitempty) = true];
-  string                non_slashable_capital = 2 [
-    (cosmos_proto.scalar)  = "cosmos.Int",
-    (gogoproto.customtype) = "cosmossdk.io/math.Int",
-    (gogoproto.nullable)   = false,
-    (amino.dont_omitempty) = true
-  ];
+  //  rpc RotateConsPubKey(MsgRotateConsPubKey) returns (MsgRotateConsPubKeyResponse) {
+  //    option (cosmos_proto.method_added_in) = "cosmos-sdk 0.51";
+  //  }
 }
 
 // MsgCreateValidator defines a SDK message for creating a new validator.
@@ -90,6 +80,7 @@ message MsgCreateValidator {
   //  cosmos.base.v1beta1.Coin value             = 7 [(gogoproto.nullable) = false, (amino.dont_omitempty) = true];
 
   Capital capital = 7 [(gogoproto.nullable) = false, (amino.dont_omitempty) = true];
+  Meta    meta    = 8 [(gogoproto.nullable) = false, (amino.dont_omitempty) = true];
 }
 
 // MsgCreateValidatorResponse defines the Msg/CreateValidator response type.
@@ -168,9 +159,10 @@ message MsgUndelegate {
   option (gogoproto.equal)           = false;
   option (gogoproto.goproto_getters) = false;
 
-  string                   delegator_address = 1 [(cosmos_proto.scalar) = "cosmos.AddressString"];
-  string                   validator_address = 2 [(cosmos_proto.scalar) = "cosmos.ValidatorAddressString"];
-  cosmos.base.v1beta1.Coin amount            = 3 [(gogoproto.nullable) = false, (amino.dont_omitempty) = true];
+  string delegator_address = 1 [(cosmos_proto.scalar) = "cosmos.AddressString"];
+  string validator_address = 2 [(cosmos_proto.scalar) = "cosmos.ValidatorAddressString"];
+  //  cosmos.base.v1beta1.Coin amount            = 3 [(gogoproto.nullable) = false, (amino.dont_omitempty) = true];
+  Capital capital = 3 [(gogoproto.nullable) = false, (amino.dont_omitempty) = true];
 }
 
 // MsgUndelegateResponse defines the Msg/Undelegate response type.

@@ -32,6 +32,7 @@ func NewMsgCreateValidator(
 	pubKey cryptotypes.PubKey,
 	capital Capital,
 	description Description,
+	meta Meta,
 	commission CommissionRates,
 	minSelfDelegation math.Int,
 ) (*MsgCreateValidator, error) {
@@ -49,6 +50,7 @@ func NewMsgCreateValidator(
 		Commission:        commission,
 		MinSelfDelegation: minSelfDelegation,
 		Capital:           capital,
+		Meta:              meta,
 	}, nil
 }
 
@@ -64,7 +66,7 @@ func (msg MsgCreateValidator) Validate(ac address.Codec) error {
 		return ErrEmptyValidatorPubKey
 	}
 
-	if msg.NonSlashableCapital.IsZero() && len(msg.SlashableBalance) == 0 {
+	if msg.Capital.NonSlashableCapital.IsZero() && len(msg.Capital.SlashableBalance) == 0 {
 		return errorsmod.Wrap(sdkerrors.ErrInvalidRequest, "both slashable and non-slashable capitals are zero")
 	}
 
@@ -137,11 +139,12 @@ func NewMsgDelegate(delAddr, valAddr string, capital Capital) *MsgDelegate {
 //}
 
 // NewMsgUndelegate creates a new MsgUndelegate instance.
-func NewMsgUndelegate(delAddr, valAddr string, amount sdk.Coin) *MsgUndelegate {
+func NewMsgUndelegate(delAddr, valAddr string, capital Capital) *MsgUndelegate {
 	return &MsgUndelegate{
 		DelegatorAddress: delAddr,
 		ValidatorAddress: valAddr,
-		Amount:           amount,
+		//Amount:           amount,
+		Capital: capital,
 	}
 }
 
