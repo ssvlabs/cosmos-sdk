@@ -4,7 +4,14 @@ package cosmos.genutil.v1beta1;
 import "gogoproto/gogo.proto";
 import "amino/amino.proto";
 
+import "google/protobuf/descriptor.proto";
+
 option go_package = "github.com/cosmos/cosmos-sdk/x/genutil/types";
+
+// Extend message options to include a "skip_generation" boolean.
+extend google.protobuf.MessageOptions {
+  bool skip_generation = 50001;
+}
 
 // GenesisState defines the raw genesis transaction in JSON.
 message GenesisState {

@@ -1,12 +1,9 @@
 package genutil
 
 import (
-	modulev1 "cosmossdk.io/api/cosmos/genutil/module/v1"
 	"cosmossdk.io/core/appmodule"
 	"cosmossdk.io/core/codec"
 	"cosmossdk.io/depinject"
-	"cosmossdk.io/depinject/appconfig"
-
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/x/genutil/types"
 )
@@ -17,9 +14,9 @@ var _ depinject.OnePerModuleType = AppModule{}
 func (am AppModule) IsOnePerModuleType() {}
 
 func init() {
-	appconfig.RegisterModule(&modulev1.Module{},
-		appconfig.Provide(ProvideModule),
-	)
+	//appconfig.RegisterModule(&modulev1.Module{},
+	//	appconfig.Provide(ProvideModule),
+	//)
 }
 
 // ModuleInputs defines the inputs needed for the genutil module.
