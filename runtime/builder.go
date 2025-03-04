@@ -28,6 +28,10 @@ type AppBuilder struct {
 	appOptions servertypes.AppOptions
 }
 
+func (a *AppBuilder) ExecuteGenesisTx(tx []byte) error {
+	return a.app.ExecuteGenesisTx(tx)
+}
+
 // DefaultGenesis returns a default genesis from the registered modules.
 func (a *AppBuilder) DefaultGenesis() map[string]json.RawMessage {
 	return a.app.DefaultGenesis()

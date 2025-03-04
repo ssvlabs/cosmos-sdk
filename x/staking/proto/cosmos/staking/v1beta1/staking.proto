@@ -97,12 +97,7 @@ message Meta {
 
 message Capital {
   repeated TokenBalance slashable_balance     = 1 [(gogoproto.nullable) = false, (amino.dont_omitempty) = true];
-  string                non_slashable_capital = 2 [
-    (cosmos_proto.scalar)  = "cosmos.Int",
-    (gogoproto.customtype) = "cosmossdk.io/math.Int",
-    (gogoproto.nullable)   = false,
-    (amino.dont_omitempty) = true
-  ];
+  string                non_slashable_capital = 2 [ (cosmos_proto.scalar)  = "cosmos.Int", (gogoproto.customtype) = "cosmossdk.io/math.Int", (gogoproto.nullable)   = false, (amino.dont_omitempty) = true ];
 }
 
 // Validator defines a validator, together with the total amount of the

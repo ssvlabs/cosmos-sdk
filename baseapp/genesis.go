@@ -2,7 +2,6 @@ package baseapp
 
 import (
 	"errors"
-
 	"github.com/cometbft/cometbft/abci/types"
 )
 
