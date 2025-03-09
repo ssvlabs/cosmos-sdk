@@ -88,20 +88,36 @@ func (c Capital) Equal(other Capital) bool {
 }
 
 func sumTokenBalances(tb1, tb2 []TokenBalance) []TokenBalance {
-	tb := make([]TokenBalance, 0)
-	for _, ac := range tb1 {
-		for _, sc := range tb2 {
-			if ac.Address == sc.Address {
-				tb = append(tb, TokenBalance{
-					Address: ac.Address,
-					Amount:  ac.Amount.Add(sc.Amount),
-				})
-				break
+	balanceMap := make(map[string]TokenBalance)
+
+	for _, balance := range tb1 {
+		balanceMap[balance.Address] = TokenBalance{
+			Address: balance.Address,
+			Amount:  balance.Amount,
+		}
+	}
+
+	// Process second slice, adding to existing balances or creating new entries
+	for _, balance := range tb2 {
+		if existingBalance, found := balanceMap[balance.Address]; found {
+			balanceMap[balance.Address] = TokenBalance{
+				Address: balance.Address,
+				Amount:  existingBalance.Amount.Add(balance.Amount),
+			}
+		} else {
+			balanceMap[balance.Address] = TokenBalance{
+				Address: balance.Address,
+				Amount:  balance.Amount,
 			}
 		}
 	}
 
-	return tb
+	result := make([]TokenBalance, 0, len(balanceMap))
+	for _, balance := range balanceMap {
+		result = append(result, balance)
+	}
+
+	return result
 }
 
 func subtractTokenBalances(tb1, tb2 []TokenBalance) []TokenBalance {

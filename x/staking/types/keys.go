@@ -2,6 +2,7 @@ package types
 
 import (
 	"encoding/binary"
+	"fmt"
 
 	"cosmossdk.io/collections"
 	addresscodec "cosmossdk.io/core/address"
@@ -107,7 +108,7 @@ func GetValidatorsByPowerIndexKey(validator Validator, powerReduction math.Int, 
 	// NOTE the larger values are of higher value
 
 	//consensusPower := sdk.TokensToConsensusPower(validator.Tokens, powerReduction)
-	consensusPower := validator.ConsensusPower(powerReduction)
+	consensusPower := validator.PotentialConsensusPower(powerReduction)
 
 	consensusPowerBytes := make([]byte, 8)
 	binary.BigEndian.PutUint64(consensusPowerBytes, uint64(consensusPower))
@@ -135,6 +136,45 @@ func GetValidatorsByPowerIndexKey(validator Validator, powerReduction math.Int, 
 	copy(key[powerBytesLen+2:], operAddrInvr)
 
 	return key
+}
+
+func ParseValidatorPowerAndAddressFromKey(key []byte, valAc addresscodec.Codec) (int64, string, error) {
+	// Check if key has minimum required length
+	if len(key) < 10 { // 1 (prefix) + 8 (power) + 1 (addrLen)
+		return 0, "", fmt.Errorf("key is too short")
+	}
+
+	// Skip the prefix byte
+	keyWithoutPrefix := key[1:]
+
+	// Extract power bytes (8 bytes) and convert to uint64
+	powerBytes := keyWithoutPrefix[:8]
+	consensusPower := int64(binary.BigEndian.Uint64(powerBytes))
+
+	// Extract address length (1 byte)
+	addrLen := int(keyWithoutPrefix[8])
+
+	// Check if key has enough bytes for the address
+	if len(keyWithoutPrefix) < 9+addrLen {
+		return 0, "", fmt.Errorf("key doesn't contain full address")
+	}
+
+	// Extract inverted address bytes
+	operAddrInvr := keyWithoutPrefix[9 : 9+addrLen]
+
+	// Invert the address bytes back to original
+	operAddr := make([]byte, addrLen)
+	for i, b := range operAddrInvr {
+		operAddr[i] = ^b
+	}
+
+	// Convert address bytes to string
+	addrString, err := valAc.BytesToString(operAddr)
+	if err != nil {
+		return 0, "", fmt.Errorf("failed to convert address bytes to string: %w", err)
+	}
+
+	return consensusPower, addrString, nil
 }
 
 // ParseValidatorPowerRankKey parses the validators operator address from power rank key

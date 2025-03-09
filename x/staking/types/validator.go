@@ -2,6 +2,7 @@ package types
 
 import (
 	"bytes"
+	"fmt"
 	"math/big"
 	"sort"
 	"strings"
@@ -439,6 +440,9 @@ func (v Validator) AddCapitalFromDel(capital Capital) Validator {
 	} else {
 		v.Capital = v.Capital.Add(capital)
 	}
+
+	// TODO: remove
+	fmt.Println("VALIDATOR ADD CAPITAL: ", v.Capital)
 
 	return v
 }

@@ -95,6 +95,7 @@ func (k Keeper) SetValidatorByConsAddr(ctx context.Context, validator types.Vali
 
 // SetValidatorByPowerIndex sets a validator by power index
 func (k Keeper) SetValidatorByPowerIndex(ctx context.Context, validator types.Validator) error {
+	fmt.Println("SetValidatorByPowerIndex capital", validator.Capital, "power", validator.PotentialConsensusPower(k.PowerReduction(ctx)))
 	// jailed validators are not kept in the power index
 	if validator.Jailed {
 		return nil
@@ -293,31 +294,27 @@ func (k Keeper) RemoveValidator(ctx context.Context, address sdk.ValAddress) err
 	return nil
 }
 
-// get groups of validators
-
-func (k Keeper) ValidatorsByStrategyID(ctx context.Context, strategyID uint64) (validators []types.Validator, err error) {
+func (k Keeper) ValidatorByStrategyID(ctx context.Context, strategyID uint64) (validator types.Validator, found bool, err error) {
 	store := k.KVStoreService.OpenKVStore(ctx)
 
 	iterator, err := store.Iterator(types.ValidatorsKey, storetypes.PrefixEndBytes(types.ValidatorsKey))
 	if err != nil {
-		return nil, err
+		return validator, false, err
 	}
 	defer iterator.Close()
 
 	for ; iterator.Valid(); iterator.Next() {
-		validator, err := types.UnmarshalValidator(k.cdc, iterator.Value())
+		validator, err = types.UnmarshalValidator(k.cdc, iterator.Value())
 		if err != nil {
-			return nil, err
+			return validator, false, err
 		}
+
 		if validator.Meta.StrategyID == strategyID {
-			validators = append(validators, validator)
+			return validator, true, nil
 		}
 	}
 
-	// TODO: remove
-	k.Logger.Debug("call validatorsByStrategyID", "validators", validators)
-
-	return validators, nil
+	return validator, false, nil
 }
 
 // GetAllValidators gets the set of all validators with no limits, used during genesis dump
@@ -386,6 +383,8 @@ func (k Keeper) GetBondedValidatorsByPower(ctx context.Context) ([]types.Validat
 			return nil, fmt.Errorf("validator record not found for address: %X", address)
 		}
 
+		// TODO: remove
+		fmt.Printf("GetBondedValidatorsByPower: %t, %v, %s, %s\n", validator.IsBonded(), validator.Capital, validator.OperatorAddress, validator.Description.Moniker)
 		if validator.IsBonded() {
 			validators[i] = validator
 			i++

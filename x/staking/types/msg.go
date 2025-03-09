@@ -66,9 +66,10 @@ func (msg MsgCreateValidator) Validate(ac address.Codec) error {
 		return ErrEmptyValidatorPubKey
 	}
 
-	if msg.Capital.NonSlashableCapital.IsZero() && len(msg.Capital.SlashableBalance) == 0 {
-		return errorsmod.Wrap(sdkerrors.ErrInvalidRequest, "both slashable and non-slashable capitals are zero")
-	}
+	// TODO: allow validator creation when both slashable and non-slashable balances are zero until spec team finalizes it
+	//if msg.Capital.NonSlashableCapital.IsZero() && len(msg.Capital.SlashableBalance) == 0 {
+	//	return errorsmod.Wrap(sdkerrors.ErrInvalidRequest, "both slashable and non-slashable capitals are zero")
+	//}
 
 	if msg.Description == (Description{}) {
 		return errorsmod.Wrap(sdkerrors.ErrInvalidRequest, "empty description")
@@ -82,12 +83,12 @@ func (msg MsgCreateValidator) Validate(ac address.Codec) error {
 		return err
 	}
 
-	if !msg.MinSelfDelegation.IsPositive() {
-		return errorsmod.Wrap(
-			sdkerrors.ErrInvalidRequest,
-			"minimum self delegation must be a positive integer",
-		)
-	}
+	//if !msg.MinSelfDelegation.IsPositive() {
+	//	return errorsmod.Wrap(
+	//		sdkerrors.ErrInvalidRequest,
+	//		"minimum self delegation must be a positive integer",
+	//	)
+	//}
 
 	//if msg.Value.Amount.LT(msg.MinSelfDelegation) {
 	//	return ErrSelfDelegationBelowMinimum

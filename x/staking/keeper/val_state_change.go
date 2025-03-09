@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"sort"
 
+	addresscodec "cosmossdk.io/core/address"
 	gogotypes "github.com/cosmos/gogoproto/types"
 
 	"cosmossdk.io/core/address"
@@ -125,6 +126,40 @@ func (k Keeper) BlockValidatorUpdates(ctx context.Context) ([]appmodule.Validato
 	return validatorUpdates, nil
 }
 
+func (k Keeper) PrintAllValidatorPowerIndices(ctx context.Context, valAc addresscodec.Codec) {
+	params, err := k.Params.Get(ctx)
+	if err != nil {
+		return
+	}
+	maxValidators := params.MaxValidators
+
+	iterator, err := k.ValidatorsPowerStoreIterator(ctx)
+	if err != nil {
+		return
+	}
+	defer iterator.Close()
+
+	i := 0
+	for ; iterator.Valid() && i < int(maxValidators); iterator.Next() {
+		item := iterator.Key()
+
+		power, _, err := types.ParseValidatorPowerAndAddressFromKey(item, valAc)
+		if err != nil {
+			return
+		}
+
+		k.Logger.Info("validator", "power", power)
+
+		valAddr := sdk.ValAddress(iterator.Value())
+		_, err = k.GetValidator(ctx, valAddr)
+		if err != nil {
+			return
+		}
+
+		k.Logger.Info(fmt.Sprintf("validator %s addr", valAddr))
+	}
+}
+
 // ApplyAndReturnValidatorSetUpdates applies and return accumulated updates to the bonded validator set. Also,
 // * Updates the active valset as keyed by LastValidatorPowerKey.
 // * Updates the total power as keyed by LastTotalPowerKey.
@@ -138,6 +173,18 @@ func (k Keeper) BlockValidatorUpdates(ctx context.Context) ([]appmodule.Validato
 // at the previous block height or were removed from the validator set entirely
 // are returned to CometBFT.
 func (k Keeper) ApplyAndReturnValidatorSetUpdates(ctx context.Context) ([]appmodule.ValidatorUpdate, error) {
+	//k.PrintAllValidatorPowerIndices(ctx, k.validatorAddressCodec)
+	bondedVals, err := k.GetBondedValidatorsByPower(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	// TODO: remove
+	for _, bVal := range bondedVals {
+		powerReduction := k.PowerReduction(ctx)
+		fmt.Printf("ApplyAndReturnValidatorSetUpdates bonded validator: operAddr: %s, cp: %d, desc: %s, capital: %v\n", bVal.OperatorAddress, bVal.ConsensusPower(powerReduction), bVal.Description, bVal.Capital)
+	}
+
 	params, err := k.Params.Get(ctx)
 	if err != nil {
 		return nil, err
@@ -172,6 +219,8 @@ func (k Keeper) ApplyAndReturnValidatorSetUpdates(ctx context.Context) ([]appmod
 			return nil, fmt.Errorf("validator record not found for address: %X", valAddr)
 		}
 
+		k.Logger.Info("Processing single validator update", "valAddr", valAddr)
+
 		if validator.Jailed {
 			return nil, errors.New("should never retrieve a jailed validator from the power store")
 		}
@@ -181,6 +230,8 @@ func (k Keeper) ApplyAndReturnValidatorSetUpdates(ctx context.Context) ([]appmod
 		if validator.PotentialConsensusPower(k.PowerReduction(ctx)) == 0 {
 			break
 		}
+		cp := validator.PotentialConsensusPower(powerReduction)
+		k.Logger.Info("Validator consensus power", "cp", cp)
 
 		// apply the appropriate state change if necessary
 		switch {
@@ -327,6 +378,7 @@ func (k Keeper) ApplyAndReturnValidatorSetUpdates(ctx context.Context) ([]appmod
 
 	// set total power on lookup index if there are any updates
 	if len(updates) > 0 {
+		k.Logger.Info("updating validators", "validator_updates", updates, "totalPower", totalPower)
 		if err = k.LastTotalPower.Set(ctx, totalPower); err != nil {
 			return nil, err
 		}
