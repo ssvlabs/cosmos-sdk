@@ -651,49 +651,49 @@ func (k Keeper) DelegateInternal(
 	//	return math.LegacyZeroDec(), types.ErrDelegatorShareExRateInvalid
 	//}
 
-	valbz, err := k.ValidatorAddressCodec().StringToBytes(validator.GetOperator())
-	if err != nil {
-		return err
-	}
+	//valbz, err := k.ValidatorAddressCodec().StringToBytes(validator.GetOperator())
+	//if err != nil {
+	//	return err
+	//}
 
 	// Get or create the delegation object and call the appropriate hook if present
-	delegation, err := k.Delegations.Get(ctx, collections.Join(delAddr, sdk.ValAddress(valbz)))
-	if err == nil {
-		// found
-		err = k.Hooks().BeforeDelegationSharesModified(ctx, delAddr, valbz)
-	} else if errors.Is(err, collections.ErrNotFound) {
-		// not found
-		delAddrStr, err1 := k.authKeeper.AddressCodec().BytesToString(delAddr)
-		if err1 != nil {
-			return err1
-		}
+	//delegation, err := k.Delegations.Get(ctx, collections.Join(delAddr, sdk.ValAddress(valbz)))
+	//if err == nil {
+	//	found
+	//err = k.Hooks().BeforeDelegationSharesModified(ctx, delAddr, valbz)
+	//} else if errors.Is(err, collections.ErrNotFound) {
+	//	not found
+	//delAddrStr, err1 := k.authKeeper.AddressCodec().BytesToString(delAddr)
+	//if err1 != nil {
+	//	return err1
+	//}
+	//
+	//delegation = types.NewDelegation(delAddrStr, validator.GetOperator(), math.LegacyZeroDec())
+	//err = k.Hooks().BeforeDelegationCreated(ctx, delAddr, valbz)
+	//} else {
+	//	return err
+	//}
 
-		delegation = types.NewDelegation(delAddrStr, validator.GetOperator(), math.LegacyZeroDec())
-		err = k.Hooks().BeforeDelegationCreated(ctx, delAddr, valbz)
-	} else {
-		return err
-	}
-
-	if err != nil {
-		return err
-	}
+	//if err != nil {
+	//	return err
+	//}
 
 	// TODO: SSV not slashing/rewarding right now, so disable shares distribution
-	_, err = k.AddValidatorCapital(ctx, validator, capital)
+	_, err := k.AddValidatorCapital(ctx, validator, capital)
 	if err != nil {
 		return err
 	}
 	// Update delegation
 	//delegation.Shares = delegation.Shares.Add(newShares)
 
-	if err = k.SetDelegation(ctx, delegation); err != nil {
-		return err
-	}
+	//if err = k.SetDelegation(ctx, delegation); err != nil {
+	//	return err
+	//}
 
 	// Call the after-modification hook
-	if err := k.Hooks().AfterDelegationModified(ctx, delAddr, valbz); err != nil {
-		return err
-	}
+	//if err := k.Hooks().AfterDelegationModified(ctx, delAddr, valbz); err != nil {
+	//	return err
+	//}
 
 	return nil
 }

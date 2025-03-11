@@ -87,6 +87,7 @@ func (c Capital) Equal(other Capital) bool {
 	return true
 }
 
+// TODO: this and subtractTokenBalances function should be properly reviewed for determenism because of map iteration
 func sumTokenBalances(tb1, tb2 []TokenBalance) []TokenBalance {
 	balanceMap := make(map[string]TokenBalance)
 
@@ -97,7 +98,6 @@ func sumTokenBalances(tb1, tb2 []TokenBalance) []TokenBalance {
 		}
 	}
 
-	// Process second slice, adding to existing balances or creating new entries
 	for _, balance := range tb2 {
 		if existingBalance, found := balanceMap[balance.Address]; found {
 			balanceMap[balance.Address] = TokenBalance{
@@ -112,9 +112,15 @@ func sumTokenBalances(tb1, tb2 []TokenBalance) []TokenBalance {
 		}
 	}
 
+	keys := make([]string, 0, len(balanceMap))
+	for k := range balanceMap {
+		keys = append(keys, k)
+	}
+	sort.Strings(keys)
+
 	result := make([]TokenBalance, 0, len(balanceMap))
-	for _, balance := range balanceMap {
-		result = append(result, balance)
+	for _, key := range keys {
+		result = append(result, balanceMap[key])
 	}
 
 	return result
@@ -137,6 +143,10 @@ func subtractTokenBalances(tb1, tb2 []TokenBalance) []TokenBalance {
 			Amount:  newAmount,
 		})
 	}
+
+	sort.Slice(result, func(i, j int) bool {
+		return result[i].Address < result[j].Address
+	})
 
 	return result
 }

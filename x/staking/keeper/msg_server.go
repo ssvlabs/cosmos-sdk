@@ -258,10 +258,10 @@ func (k Keeper) Delegate(ctx context.Context, msg *types.MsgDelegate) error {
 		return sdkerrors.ErrInvalidAddress.Wrapf("invalid validator address: %s", valErr)
 	}
 
-	delegatorAddress, err := k.authKeeper.AddressCodec().StringToBytes(msg.DelegatorAddress)
-	if err != nil {
-		return sdkerrors.ErrInvalidAddress.Wrapf("invalid delegator address: %s", err)
-	}
+	//delegatorAddress, err := k.authKeeper.AddressCodec().StringToBytes(msg.DelegatorAddress)
+	//if err != nil {
+	//	return sdkerrors.ErrInvalidAddress.Wrapf("invalid delegator address: %s", err)
+	//}
 
 	// TODO: add capital validation
 	//if !msg.Amount.IsValid() || !msg.Amount.Amount.IsPositive() {
@@ -290,7 +290,8 @@ func (k Keeper) Delegate(ctx context.Context, msg *types.MsgDelegate) error {
 	// TODO: should check that msg.Capital matches validator.Capital in scope of non-slashable balance?
 
 	// NOTE: source funds are always unbonded
-	err = k.DelegateInternal(ctx, delegatorAddress, msg.Capital, types.Unbonded, validator)
+	fmt.Printf("######## Delegate to validator %s, capital %v\n", validator.Description.Moniker, msg.Capital)
+	err = k.DelegateInternal(ctx, valAddr, msg.Capital, types.Unbonded, validator)
 	if err != nil {
 		return err
 	}

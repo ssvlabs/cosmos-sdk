@@ -95,6 +95,8 @@ message Meta {
   string bApp       = 2;
 }
 
+// both slashable and non-slashable should always be initialized, otherwise it will panic
+// default value is: Capital {[]TokenBalance{}, math.ZeroInt()}
 message Capital {
   repeated TokenBalance slashable_balance     = 1 [(gogoproto.nullable) = false, (amino.dont_omitempty) = true];
   string                non_slashable_capital = 2 [ (cosmos_proto.scalar)  = "cosmos.Int", (gogoproto.customtype) = "cosmossdk.io/math.Int", (gogoproto.nullable)   = false, (amino.dont_omitempty) = true ];
