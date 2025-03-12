@@ -2,7 +2,7 @@ package types
 
 import (
 	"bytes"
-	"fmt"
+	gomath "math"
 	"math/big"
 	"sort"
 	"strings"
@@ -382,15 +382,17 @@ func (v Validator) ConsensusPower(powerReduction math.Int) int64 {
 // PotentialConsensusPower returns the potential consensus-engine power.
 func (v Validator) PotentialConsensusPower(powerReduction math.Int) int64 {
 	c := v.Capital
-	if len(c.SlashableBalance) == 0 {
+
+	if len(c.SlashableBalance) == 0 && (c.NonSlashableCapital.IsNil() || c.NonSlashableCapital.IsZero()) {
 		return 0
 	}
 
 	// sum of inverses := sum(1 / amount)
 	sumInverse := new(big.Rat).SetInt64(0)
 	var count int64
+
 	for _, sb := range c.SlashableBalance {
-		if sb.Amount.IsPositive() {
+		if !sb.Amount.IsNil() && sb.Amount.IsPositive() {
 			// Invert the balance: 1 / sb.Amount
 			inv := new(big.Rat).SetInt(sb.Amount.BigInt())
 			inv.Inv(inv)
@@ -399,7 +401,15 @@ func (v Validator) PotentialConsensusPower(powerReduction math.Int) int64 {
 		}
 	}
 
-	if count == 0 {
+	if !c.NonSlashableCapital.IsNil() && c.NonSlashableCapital.IsPositive() {
+		// Invert the balance: 1 / NonSlashableBalance
+		inv := new(big.Rat).SetInt(c.NonSlashableCapital.BigInt())
+		inv.Inv(inv)
+		sumInverse.Add(sumInverse, inv)
+		count++
+	}
+
+	if count == 0 || sumInverse.Sign() == 0 {
 		return 0
 	}
 
@@ -407,22 +417,23 @@ func (v Validator) PotentialConsensusPower(powerReduction math.Int) int64 {
 	n := big.NewRat(count, 1)
 	harmonicMean := new(big.Rat).Quo(n, sumInverse)
 
-	// divide by powerReduction
+	if powerReduction.IsZero() {
+		return 0
+	}
 	pr := new(big.Rat).SetInt(powerReduction.BigInt())
 	harmonicMean.Quo(harmonicMean, pr)
 
-	// convert the result to an int64 (floor).
 	num := harmonicMean.Num()
 	den := harmonicMean.Denom()
 
 	result := new(big.Int).Div(num, den)
 
-	//if !result.IsInt64() {
-	//	if result.Sign() > 0 {
-	//		return math.MaxInt64
-	//	}
-	//	return math.MinInt64
-	//}
+	if !result.IsInt64() {
+		if result.Sign() > 0 {
+			return gomath.MaxInt64
+		}
+		return gomath.MinInt64
+	}
 
 	return result.Int64()
 }
@@ -441,14 +452,16 @@ func (v Validator) AddCapitalFromDel(capital Capital) Validator {
 		v.Capital = v.Capital.Add(capital)
 	}
 
-	// TODO: remove
-	fmt.Println("VALIDATOR ADD CAPITAL: ", v.Capital)
-
 	return v
 }
 
 func (v Validator) RemoveDelCapital(capital Capital) (Validator, error) {
-	if !v.Capital.HasEnoughFunds(capital) {
+	ok, err := v.Capital.HasEnoughFunds(capital)
+	if err != nil {
+		return v, err
+	}
+
+	if !ok {
 		return v, errors.Wrapf(sdkerrors.ErrInvalidRequest, "validator capital has not enough balances to be removed")
 	}
 

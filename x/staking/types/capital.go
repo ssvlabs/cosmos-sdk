@@ -1,7 +1,9 @@
 package types
 
 import (
+	"fmt"
 	"sort"
+	"strings"
 )
 
 func (c Capital) IsPositive() bool {
@@ -27,29 +29,55 @@ func (c Capital) Sub(addCapital Capital) Capital {
 	}
 }
 
-func (c Capital) HasEnoughFunds(required Capital) bool {
+func (c Capital) HasEnoughFunds(required Capital) (bool, error) {
 	if c.NonSlashableCapital.LT(required.NonSlashableCapital) {
-		return false
+		return false, nil
 	}
 
-	for _, requiredtoken := range required.GetSlashableBalance() {
+	for _, requiredToken := range required.GetSlashableBalance() {
 		found := false
 		for _, balance := range c.GetSlashableBalance() {
-			if requiredtoken.Address == balance.Address {
+			if requiredToken.Address == balance.Address {
 				found = true
-				if requiredtoken.Amount.GT(balance.Amount) {
-					return false
+				if requiredToken.Amount.GT(balance.Amount) {
+					return false, nil
 				}
 				break
 			}
 		}
 
 		if !found {
-			return false
+			return false, fmt.Errorf("token %s unsupported by validator, supported: %v", requiredToken.String(), extractTokenList(c.GetSlashableBalance()))
 		}
 	}
 
-	return true
+	return true, nil
+}
+
+func extractTokenList(balances []TokenBalance) []string {
+	tokenList := make([]string, 0, len(balances))
+	for _, balance := range balances {
+		tokenList = append(tokenList, balance.String())
+	}
+
+	return tokenList
+}
+
+func (c Capital) String() string {
+	elems := make([]string, 0, len(c.SlashableBalance))
+
+	for _, balance := range c.GetSlashableBalance() {
+		address := balance.Address
+		if address == "0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee" {
+			address = "ETH"
+		} else if address == "0x779877a7b0d9e8603169ddbd7836e478b4624789" {
+			address = "LINK"
+		}
+
+		elems = append(elems, address+"="+balance.Amount.String())
+	}
+
+	return fmt.Sprintf("{%s}", strings.Join(elems, ","))
 }
 
 func (c Capital) Equal(other Capital) bool {

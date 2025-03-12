@@ -77,52 +77,6 @@ func (k Keeper) BlockValidatorUpdates(ctx context.Context) ([]appmodule.Validato
 	//	}
 	//}
 
-	// Remove all mature redelegations from the red queue.
-	//matureRedelegations, err := k.DequeueAllMatureRedelegationQueue(ctx, time)
-	//if err != nil {
-	//	return nil, err
-	//}
-
-	//for _, dvvTriplet := range matureRedelegations {
-	//	valSrcAddr, err := k.validatorAddressCodec.StringToBytes(dvvTriplet.ValidatorSrcAddress)
-	//	if err != nil {
-	//		return nil, err
-	//	}
-	//	valDstAddr, err := k.validatorAddressCodec.StringToBytes(dvvTriplet.ValidatorDstAddress)
-	//	if err != nil {
-	//		return nil, err
-	//	}
-	//	delegatorAddress, err := k.authKeeper.AddressCodec().StringToBytes(dvvTriplet.DelegatorAddress)
-	//	if err != nil {
-	//		return nil, err
-	//	}
-	//
-	//	balances, err := k.CompleteRedelegation(
-	//		ctx,
-	//		delegatorAddress,
-	//		valSrcAddr,
-	//		valDstAddr,
-	//	)
-	//	if err != nil {
-	//		continue
-	//	}
-	//
-	//	if err := k.EventService.EventManager(ctx).EmitKV(
-	//		types.EventTypeCompleteRedelegation,
-	//		event.NewAttribute(sdk.AttributeKeyAmount, balances.String()),
-	//		event.NewAttribute(types.AttributeKeyDelegator, dvvTriplet.DelegatorAddress),
-	//		event.NewAttribute(types.AttributeKeySrcValidator, dvvTriplet.ValidatorSrcAddress),
-	//		event.NewAttribute(types.AttributeKeyDstValidator, dvvTriplet.ValidatorDstAddress),
-	//	); err != nil {
-	//		return nil, err
-	//	}
-	//}
-
-	//err = k.PurgeAllMaturedConsKeyRotatedKeys(ctx, time)
-	//if err != nil {
-	//	return nil, err
-	//}
-
 	return validatorUpdates, nil
 }
 
@@ -160,6 +114,41 @@ func (k Keeper) PrintAllValidatorPowerIndices(ctx context.Context, valAc address
 	}
 }
 
+// TODO: remove
+func (k Keeper) DebugPrintAllValidators(ctx context.Context) error {
+	allVals, err := k.GetAllValidators(ctx)
+	if err != nil {
+		return err
+	}
+
+	for _, bVal := range allVals {
+		powerReduction := k.PowerReduction(ctx)
+		if bVal.Jailed {
+			k.Logger.Info("Validator", "power", bVal.ConsensusPower(powerReduction),
+				"addr", bVal.OperatorAddress,
+				"strategyID", bVal.Meta.StrategyID,
+				"moniker", bVal.Description.Moniker,
+				"nonSlashable", bVal.Capital.NonSlashableCapital.String(),
+				"slashable", bVal.Capital,
+				"status", bVal.Status,
+				"jailed", bVal.Jailed,
+				"unbondingHeight", bVal.UnbondingHeight,
+			)
+		} else {
+			k.Logger.Info("Validator", "power", bVal.ConsensusPower(powerReduction),
+				"addr", bVal.OperatorAddress,
+				"strategyID", bVal.Meta.StrategyID,
+				"moniker", bVal.Description.Moniker,
+				"nonSlashable", bVal.Capital.NonSlashableCapital.String(),
+				"slashable", bVal.Capital,
+				"status", bVal.Status.String(),
+			)
+		}
+	}
+
+	return nil
+}
+
 // ApplyAndReturnValidatorSetUpdates applies and return accumulated updates to the bonded validator set. Also,
 // * Updates the active valset as keyed by LastValidatorPowerKey.
 // * Updates the total power as keyed by LastTotalPowerKey.
@@ -173,16 +162,11 @@ func (k Keeper) PrintAllValidatorPowerIndices(ctx context.Context, valAc address
 // at the previous block height or were removed from the validator set entirely
 // are returned to CometBFT.
 func (k Keeper) ApplyAndReturnValidatorSetUpdates(ctx context.Context) ([]appmodule.ValidatorUpdate, error) {
-	//k.PrintAllValidatorPowerIndices(ctx, k.validatorAddressCodec)
-	bondedVals, err := k.GetBondedValidatorsByPower(ctx)
-	if err != nil {
-		return nil, err
-	}
 
 	// TODO: remove
-	for _, bVal := range bondedVals {
-		powerReduction := k.PowerReduction(ctx)
-		fmt.Printf("ApplyAndReturnValidatorSetUpdates bonded validator: operAddr: %s, cp: %d, desc: %s, capital: %v\n", bVal.OperatorAddress, bVal.ConsensusPower(powerReduction), bVal.Description, bVal.Capital)
+	err := k.DebugPrintAllValidators(ctx)
+	if err != nil {
+		return nil, err
 	}
 
 	params, err := k.Params.Get(ctx)
@@ -219,8 +203,6 @@ func (k Keeper) ApplyAndReturnValidatorSetUpdates(ctx context.Context) ([]appmod
 			return nil, fmt.Errorf("validator record not found for address: %X", valAddr)
 		}
 
-		k.Logger.Info("Processing single validator update", "valAddr", valAddr)
-
 		if validator.Jailed {
 			return nil, errors.New("should never retrieve a jailed validator from the power store")
 		}
@@ -230,8 +212,6 @@ func (k Keeper) ApplyAndReturnValidatorSetUpdates(ctx context.Context) ([]appmod
 		if validator.PotentialConsensusPower(k.PowerReduction(ctx)) == 0 {
 			break
 		}
-		cp := validator.PotentialConsensusPower(powerReduction)
-		k.Logger.Info("Validator consensus power", "cp", cp)
 
 		// apply the appropriate state change if necessary
 		switch {
@@ -282,22 +262,17 @@ func (k Keeper) ApplyAndReturnValidatorSetUpdates(ctx context.Context) ([]appmod
 	}
 
 	for _, valAddrBytes := range noLongerBonded {
-		validator, err := k.GetValidator(ctx, sdk.ValAddress(valAddrBytes))
+		validator, err := k.GetValidator(ctx, valAddrBytes)
 		if err != nil {
 			return nil, fmt.Errorf("validator record not found for address: %X", sdk.ValAddress(valAddrBytes))
 		}
-		//validator, err = k.bondedToUnbonding(ctx, validator)
-		//if err != nil {
-		//	return nil, err
-		//}
-		//str, err := k.validatorAddressCodec.StringToBytes(validator.GetOperator())
-		//if err != nil {
-		//	return nil, err
-		//}
-		//amtFromBondedToNotBonded = amtFromBondedToNotBonded.Add(validator.GetTokens())
-		//if err = k.DeleteLastValidatorPower(ctx, str); err != nil {
-		//	return nil, err
-		//}
+
+		err = k.unbond(ctx, validator)
+		if err != nil {
+			return nil, err
+		}
+
+		k.Logger.Info("Validator no longer bonded", "valAddr", sdk.ValAddress(valAddrBytes))
 
 		updates = append(updates, validator.ModuleValidatorUpdateZero())
 	}
@@ -388,6 +363,40 @@ func (k Keeper) ApplyAndReturnValidatorSetUpdates(ctx context.Context) ([]appmod
 }
 
 // Validator state transitions
+
+func (k Keeper) unbond(ctx context.Context, validator types.Validator) error {
+	validator, err := k.bondedToUnbonding(ctx, validator)
+	if err != nil {
+		return err
+	}
+
+	str, err := k.validatorAddressCodec.StringToBytes(validator.GetOperator())
+	if err != nil {
+		return err
+	}
+
+	if err = k.DeleteLastValidatorPower(ctx, str); err != nil {
+		return err
+	}
+
+	val, err := k.completeUnbondingValidator(ctx, validator)
+	if err != nil {
+		return err
+	}
+
+	if val.Capital.IsZero() {
+		addr, err := k.validatorAddressCodec.StringToBytes(val.OperatorAddress)
+		if err != nil {
+			return err
+		}
+
+		if err = k.RemoveValidator(ctx, addr); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
 
 func (k Keeper) bondedToUnbonding(ctx context.Context, validator types.Validator) (types.Validator, error) {
 	if !validator.IsBonded() {
@@ -525,9 +534,9 @@ func (k Keeper) BeginUnbondingValidator(ctx context.Context, validator types.Val
 	}
 
 	// Adds to unbonding validator queue
-	if err = k.InsertUnbondingValidatorQueue(ctx, validator); err != nil {
-		return validator, err
-	}
+	//if err = k.InsertUnbondingValidatorQueue(ctx, validator); err != nil {
+	//	return validator, err
+	//}
 
 	// trigger hook
 	consAddr, err := validator.GetConsAddr()

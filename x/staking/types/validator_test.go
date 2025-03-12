@@ -30,7 +30,7 @@ func TestPotentialConsensusPower(t *testing.T) {
 				SlashableBalance: []TokenBalance{
 					{Amount: math.NewInt(1000000)},
 				},
-				NonSlashableCapital: math.NewInt(1000),
+				NonSlashableCapital: math.NewInt(1000000),
 			},
 		}
 
@@ -130,17 +130,18 @@ func TestPotentialConsensusPower(t *testing.T) {
 	// Test with large numbers
 	t.Run("large numbers", func(t *testing.T) {
 		largeNumber := new(big.Int).Exp(big.NewInt(10), big.NewInt(20), nil) // 10^20
+
 		validator := Validator{
 			Capital: Capital{
 				SlashableBalance: []TokenBalance{
 					{Amount: math.NewIntFromBigInt(largeNumber)},
 				},
-				NonSlashableCapital: math.NewInt(1000),
+				NonSlashableCapital: math.NewInt(1_000_000_000_000_000),
 			},
 		}
 
 		power := validator.PotentialConsensusPower(powerReduction)
-		expected := new(big.Int).Div(largeNumber, big.NewInt(1000000)).Int64()
+		expected := new(big.Int).Div(largeNumber, big.NewInt(1999980000)).Int64()
 		require.EqualValues(t, expected, power)
 	})
 

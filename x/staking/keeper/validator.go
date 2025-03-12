@@ -95,7 +95,7 @@ func (k Keeper) SetValidatorByConsAddr(ctx context.Context, validator types.Vali
 
 // SetValidatorByPowerIndex sets a validator by power index
 func (k Keeper) SetValidatorByPowerIndex(ctx context.Context, validator types.Validator) error {
-	fmt.Println("SetValidatorByPowerIndex capital", validator.Capital, "power", validator.PotentialConsensusPower(k.PowerReduction(ctx)))
+	//fmt.Println("SetValidatorByPowerIndex capital", validator.Capital, "power", validator.PotentialConsensusPower(k.PowerReduction(ctx)))
 	// jailed validators are not kept in the power index
 	if validator.Jailed {
 		return nil
@@ -384,7 +384,7 @@ func (k Keeper) GetBondedValidatorsByPower(ctx context.Context) ([]types.Validat
 		}
 
 		// TODO: remove
-		fmt.Printf("GetBondedValidatorsByPower: %t, %v, %s, %s\n", validator.IsBonded(), validator.Capital, validator.OperatorAddress, validator.Description.Moniker)
+		//fmt.Printf("GetBondedValidatorsByPower: %t, %v, %s, %s\n", validator.IsBonded(), validator.Capital, validator.OperatorAddress, validator.Description.Moniker)
 		if validator.IsBonded() {
 			validators[i] = validator
 			i++

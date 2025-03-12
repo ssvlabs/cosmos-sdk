@@ -641,7 +641,7 @@ func (k Keeper) DequeueAllMatureRedelegationQueue(ctx context.Context, currTime 
 // Delegate performs a delegation, set/update everything necessary within the store.
 // tokenSrc indicates the bond status of the incoming funds.
 func (k Keeper) DelegateInternal(
-	ctx context.Context, delAddr sdk.AccAddress, capital types.Capital, tokenSrc types.BondStatus,
+	ctx context.Context, capital types.Capital, tokenSrc types.BondStatus,
 	validator types.Validator,
 ) error {
 	// In some situations, the exchange rate becomes invalid, e.g. if
@@ -700,20 +700,20 @@ func (k Keeper) DelegateInternal(
 
 // Unbond unbonds a particular delegation and perform associated store operations.
 func (k Keeper) Unbond(
-	ctx context.Context, delAddr sdk.AccAddress, valAddr sdk.ValAddress, capital types.Capital,
+	ctx context.Context, valAddr sdk.ValAddress, capital types.Capital,
 ) (err error) {
 	// check if a delegation object exists in the store
-	_, err = k.Delegations.Get(ctx, collections.Join(delAddr, valAddr))
-	if errors.Is(err, collections.ErrNotFound) {
-		return types.ErrNoDelegatorForAddress
-	} else if err != nil {
-		return err
-	}
+	//_, err = k.Delegations.Get(ctx, collections.Join(delAddr, valAddr))
+	//if errors.Is(err, collections.ErrNotFound) {
+	//	return types.ErrNoDelegatorForAddress
+	//} else if err != nil {
+	//	return err
+	//}
 
 	// call the before-delegation-modified hook
-	if err := k.Hooks().BeforeDelegationSharesModified(ctx, delAddr, valAddr); err != nil {
-		return err
-	}
+	//if err := k.Hooks().BeforeDelegationSharesModified(ctx, delAddr, valAddr); err != nil {
+	//	return err
+	//}
 
 	// ensure that we have enough shares to remove
 	//if delegation.Shares.LT(shares) {
@@ -835,7 +835,7 @@ func (k Keeper) Unbond(
 // an unbonding object and inserting it into the unbonding queue which will be
 // processed during the staking EndBlocker.
 func (k Keeper) UndelegateInternal(
-	ctx context.Context, delAddr sdk.AccAddress, valAddr sdk.ValAddress, capital types.Capital,
+	ctx context.Context, valAddr sdk.ValAddress, capital types.Capital,
 ) (time.Time, error) {
 	//validator, err := k.GetValidator(ctx, valAddr)
 	//if err != nil {
@@ -852,7 +852,7 @@ func (k Keeper) UndelegateInternal(
 	//	return time.Time{}, math.Int{}, types.ErrMaxUnbondingDelegationEntries
 	//}
 
-	err := k.Unbond(ctx, delAddr, valAddr, capital)
+	err := k.Unbond(ctx, valAddr, capital)
 	if err != nil {
 		return time.Time{}, err
 	}

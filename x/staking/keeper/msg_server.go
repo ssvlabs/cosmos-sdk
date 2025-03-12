@@ -146,7 +146,7 @@ func (k Keeper) CreateValidator(ctx context.Context, msg *types.MsgCreateValidat
 	// move coins from the msg.Address account to a (self-delegation) delegator account
 	// the validator account and global shares are updated within here
 	// NOTE source will always be from a wallet which are unbonded
-	err = k.DelegateInternal(ctx, valAddr, msg.Capital, types.Unbonded, validator)
+	err = k.DelegateInternal(ctx, msg.Capital, types.Unbonded, validator)
 	if err != nil {
 		return err
 	}
@@ -290,8 +290,7 @@ func (k Keeper) Delegate(ctx context.Context, msg *types.MsgDelegate) error {
 	// TODO: should check that msg.Capital matches validator.Capital in scope of non-slashable balance?
 
 	// NOTE: source funds are always unbonded
-	fmt.Printf("######## Delegate to validator %s, capital %v\n", validator.Description.Moniker, msg.Capital)
-	err = k.DelegateInternal(ctx, valAddr, msg.Capital, types.Unbonded, validator)
+	err = k.DelegateInternal(ctx, msg.Capital, types.Unbonded, validator)
 	if err != nil {
 		return err
 	}
@@ -309,70 +308,6 @@ func (k Keeper) Delegate(ctx context.Context, msg *types.MsgDelegate) error {
 	return nil
 }
 
-// BeginRedelegate defines a method for performing a redelegation of coins from a source validator to a destination validator of given delegator
-//func (k msgServer) BeginRedelegate(ctx context.Context, msg *types.MsgBeginRedelegate) (*types.MsgBeginRedelegateResponse, error) {
-//	valSrcAddr, err := k.validatorAddressCodec.StringToBytes(msg.ValidatorSrcAddress)
-//	if err != nil {
-//		return nil, sdkerrors.ErrInvalidAddress.Wrapf("invalid source validator address: %s", err)
-//	}
-//
-//	valDstAddr, err := k.validatorAddressCodec.StringToBytes(msg.ValidatorDstAddress)
-//	if err != nil {
-//		return nil, sdkerrors.ErrInvalidAddress.Wrapf("invalid destination validator address: %s", err)
-//	}
-//
-//	delegatorAddress, err := k.authKeeper.AddressCodec().StringToBytes(msg.DelegatorAddress)
-//	if err != nil {
-//		return nil, sdkerrors.ErrInvalidAddress.Wrapf("invalid delegator address: %s", err)
-//	}
-//
-//	if !msg.Amount.IsValid() || !msg.Amount.Amount.IsPositive() {
-//		return nil, errorsmod.Wrap(
-//			sdkerrors.ErrInvalidRequest,
-//			"invalid shares amount",
-//		)
-//	}
-//
-//	shares, err := k.ValidateUnbondAmount(
-//		ctx, delegatorAddress, valSrcAddr, msg.Amount.Amount,
-//	)
-//	if err != nil {
-//		return nil, err
-//	}
-//
-//	bondDenom, err := k.BondDenom(ctx)
-//	if err != nil {
-//		return nil, err
-//	}
-//
-//	if msg.Amount.Denom != bondDenom {
-//		return nil, errorsmod.Wrapf(
-//			sdkerrors.ErrInvalidRequest, "invalid coin denomination: got %s, expected %s", msg.Amount.Denom, bondDenom,
-//		)
-//	}
-//
-//	completionTime, err := k.BeginRedelegation(
-//		ctx, delegatorAddress, valSrcAddr, valDstAddr, shares,
-//	)
-//	if err != nil {
-//		return nil, err
-//	}
-//
-//	if err := k.EventService.EventManager(ctx).EmitKV(
-//		types.EventTypeRedelegate,
-//		event.NewAttribute(types.AttributeKeySrcValidator, msg.ValidatorSrcAddress),
-//		event.NewAttribute(types.AttributeKeyDstValidator, msg.ValidatorDstAddress),
-//		event.NewAttribute(sdk.AttributeKeyAmount, msg.Amount.String()),
-//		event.NewAttribute(types.AttributeKeyCompletionTime, completionTime.Format(time.RFC3339)),
-//	); err != nil {
-//		return nil, err
-//	}
-//
-//	return &types.MsgBeginRedelegateResponse{
-//		CompletionTime: completionTime,
-//	}, nil
-//}
-
 // Undelegate defines a method for performing an undelegation from a delegate and a validator
 func (k Keeper) Undelegate(ctx context.Context, msg *types.MsgUndelegate) error {
 	addr, err := k.validatorAddressCodec.StringToBytes(msg.ValidatorAddress)
@@ -380,10 +315,10 @@ func (k Keeper) Undelegate(ctx context.Context, msg *types.MsgUndelegate) error 
 		return sdkerrors.ErrInvalidAddress.Wrapf("invalid validator address: %s", err)
 	}
 
-	delegatorAddress, err := k.authKeeper.AddressCodec().StringToBytes(msg.DelegatorAddress)
-	if err != nil {
-		return sdkerrors.ErrInvalidAddress.Wrapf("invalid delegator address: %s", err)
-	}
+	//delegatorAddress, err := k.authKeeper.AddressCodec().StringToBytes(msg.DelegatorAddress)
+	//if err != nil {
+	//	return sdkerrors.ErrInvalidAddress.Wrapf("invalid delegator address: %s", err)
+	//}
 
 	if !msg.Capital.IsPositive() {
 		return errorsmod.Wrap(
@@ -418,7 +353,7 @@ func (k Keeper) Undelegate(ctx context.Context, msg *types.MsgUndelegate) error 
 	//}
 
 	//completionTime, undelegatedAmt, err := k.Keeper.Undelegate(ctx, delegatorAddress, addr, shares)
-	completionTime, err := k.UndelegateInternal(ctx, delegatorAddress, addr, msg.Capital)
+	completionTime, err := k.UndelegateInternal(ctx, addr, msg.Capital)
 	if err != nil {
 		return err
 	}
