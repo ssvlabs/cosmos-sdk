@@ -343,7 +343,7 @@ func (s *KeeperTestSuite) TestMsgEditValidator() {
 	pk := ed25519.GenPrivKey().PubKey()
 	require.NotNil(pk)
 
-	comm := types.NewCommissionRates(math.LegacyNewDec(0), math.LegacyNewDec(0), math.LegacyNewDec(0))
+	comm := types.NewCommissionRates(math.LegacyNewDec(0))
 	msg, err := types.NewMsgCreateValidator(s.valAddressToString(ValAddr), pk, types.Description{Moniker: "NewVal"}, comm, math.OneInt())
 	require.NoError(err)
 
@@ -515,7 +515,7 @@ func (s *KeeperTestSuite) TestMsgDelegate() {
 	pk := ed25519.GenPrivKey().PubKey()
 	require.NotNil(pk)
 
-	comm := types.NewCommissionRates(math.LegacyNewDec(0), math.LegacyNewDec(0), math.LegacyNewDec(0))
+	comm := types.NewCommissionRates(math.LegacyNewDec(0))
 
 	msg, err := types.NewMsgCreateValidator(s.valAddressToString(ValAddr), pk, types.Description{Moniker: "NewVal"}, comm, math.OneInt())
 	require.NoError(err)
@@ -638,7 +638,7 @@ func (s *KeeperTestSuite) TestMsgBeginRedelegate() {
 	dstPk := ed25519.GenPrivKey().PubKey()
 	require.NotNil(dstPk)
 
-	comm := types.NewCommissionRates(math.LegacyNewDec(0), math.LegacyNewDec(0), math.LegacyNewDec(0))
+	comm := types.NewCommissionRates(math.LegacyNewDec(0))
 	amt := sdk.Coin{Denom: sdk.DefaultBondDenom, Amount: keeper.TokensFromConsensusPower(s.ctx, int64(100))}
 
 	msg, err := types.NewMsgCreateValidator(s.valAddressToString(srcValAddr), pk, types.Description{Moniker: "NewVal"}, comm, math.OneInt())
@@ -799,7 +799,7 @@ func (s *KeeperTestSuite) TestMsgUndelegate() {
 	pk := ed25519.GenPrivKey().PubKey()
 	require.NotNil(pk)
 
-	comm := types.NewCommissionRates(math.LegacyNewDec(0), math.LegacyNewDec(0), math.LegacyNewDec(0))
+	comm := types.NewCommissionRates(math.LegacyNewDec(0))
 	amt := sdk.Coin{Denom: sdk.DefaultBondDenom, Amount: keeper.TokensFromConsensusPower(s.ctx, int64(100))}
 
 	msg, err := types.NewMsgCreateValidator(s.valAddressToString(ValAddr), pk, types.Description{Moniker: "NewVal"}, comm, math.OneInt())
@@ -921,7 +921,7 @@ func (s *KeeperTestSuite) TestMsgCancelUnbondingDelegation() {
 	pk := ed25519.GenPrivKey().PubKey()
 	require.NotNil(pk)
 
-	comm := types.NewCommissionRates(math.LegacyNewDec(0), math.LegacyNewDec(0), math.LegacyNewDec(0))
+	comm := types.NewCommissionRates(math.LegacyNewDec(0))
 	amt := sdk.Coin{Denom: sdk.DefaultBondDenom, Amount: keeper.TokensFromConsensusPower(s.ctx, int64(100))}
 
 	s.bankKeeper.EXPECT().DelegateCoinsFromAccountToModule(gomock.Any(), Addr, types.NotBondedPoolName, gomock.Any()).AnyTimes()
@@ -1082,7 +1082,7 @@ func (s *KeeperTestSuite) TestMsgUpdateParams() {
 	// create validator to test commission rate
 	pk := ed25519.GenPrivKey().PubKey()
 	require.NotNil(pk)
-	comm := types.NewCommissionRates(math.LegacyNewDec(0), math.LegacyNewDec(0), math.LegacyNewDec(0))
+	comm := types.NewCommissionRates(math.LegacyNewDec(0))
 	s.bankKeeper.EXPECT().DelegateCoinsFromAccountToModule(gomock.Any(), Addr, types.NotBondedPoolName, gomock.Any()).AnyTimes()
 	msg, err := types.NewMsgCreateValidator(s.valAddressToString(ValAddr), pk, types.Description{Moniker: "NewVal"}, comm, math.OneInt())
 	require.NoError(err)

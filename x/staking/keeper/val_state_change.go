@@ -124,7 +124,7 @@ func (k Keeper) DebugPrintAllValidators(ctx context.Context) error {
 	for _, bVal := range allVals {
 		powerReduction := k.PowerReduction(ctx)
 		if bVal.Jailed {
-			k.Logger.Info("Validator", "power", bVal.ConsensusPower(powerReduction),
+			k.Logger.Info("Validator", "power", bVal.PotentialConsensusPower(powerReduction),
 				"addr", bVal.OperatorAddress,
 				"strategyID", bVal.Meta.StrategyID,
 				"moniker", bVal.Description.Moniker,
@@ -135,7 +135,7 @@ func (k Keeper) DebugPrintAllValidators(ctx context.Context) error {
 				"unbondingHeight", bVal.UnbondingHeight,
 			)
 		} else {
-			k.Logger.Info("Validator", "power", bVal.ConsensusPower(powerReduction),
+			k.Logger.Info("Validator", "power", bVal.PotentialConsensusPower(powerReduction),
 				"addr", bVal.OperatorAddress,
 				"strategyID", bVal.Meta.StrategyID,
 				"moniker", bVal.Description.Moniker,

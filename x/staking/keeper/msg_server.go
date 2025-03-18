@@ -1,7 +1,10 @@
 package keeper
 
 import (
+	"bytes"
 	"context"
+	"cosmossdk.io/collections"
+	"errors"
 	"fmt"
 	"slices"
 	"time"
@@ -86,21 +89,10 @@ func (k Keeper) CreateValidator(ctx context.Context, msg *types.MsgCreateValidat
 		return err
 	}
 
-	//err = k.checkConsKeyAlreadyUsed(ctx, pk)
-	//if err != nil {
-	//	return nil, err
-	//}
-
-	//bondDenom, err := k.BondDenom(ctx)
-	//if err != nil {
-	//	return nil, err
-	//}
-
-	//if msg.Value.Denom != bondDenom {
-	//	return nil, errorsmod.Wrapf(
-	//		sdkerrors.ErrInvalidRequest, "invalid coin denomination: got %s, expected %s", msg.Value.Denom, bondDenom,
-	//	)
-	//}
+	err = k.checkConsKeyAlreadyUsed(ctx, pk)
+	if err != nil {
+		return err
+	}
 
 	if _, err := msg.Description.EnsureLength(); err != nil {
 		return err
@@ -111,17 +103,12 @@ func (k Keeper) CreateValidator(ctx context.Context, msg *types.MsgCreateValidat
 		return err
 	}
 
-	commission := types.NewCommissionWithTime(
-		msg.Commission.Rate, msg.Commission.MaxRate,
-		msg.Commission.MaxChangeRate, k.HeaderService.HeaderInfo(ctx).Time,
-	)
+	commission := types.NewCommissionWithTime(msg.Commission.Rate, k.HeaderService.HeaderInfo(ctx).Time)
 
 	validator, err = validator.SetInitialCommission(commission)
 	if err != nil {
 		return err
 	}
-
-	validator.MinSelfDelegation = msg.MinSelfDelegation
 
 	err = k.SetValidator(ctx, validator)
 	if err != nil {
@@ -163,48 +150,41 @@ func (k Keeper) CreateValidator(ctx context.Context, msg *types.MsgCreateValidat
 }
 
 // EditValidator defines a method for editing an existing validator
-func (k msgServer) EditValidator(ctx context.Context, msg *types.MsgEditValidator) (*types.MsgEditValidatorResponse, error) {
+func (k Keeper) EditValidator(ctx context.Context, msg *types.MsgEditValidator) error {
 	valAddr, err := k.validatorAddressCodec.StringToBytes(msg.ValidatorAddress)
 	if err != nil {
-		return nil, sdkerrors.ErrInvalidAddress.Wrapf("invalid validator address: %s", err)
+		return sdkerrors.ErrInvalidAddress.Wrapf("invalid validator address: %s", err)
 	}
 
 	if msg.Description == (types.Description{}) {
-		return nil, errorsmod.Wrap(sdkerrors.ErrInvalidRequest, "empty description")
-	}
-
-	if msg.MinSelfDelegation != nil && !msg.MinSelfDelegation.IsPositive() {
-		return nil, errorsmod.Wrap(
-			sdkerrors.ErrInvalidRequest,
-			"minimum self delegation must be a positive integer",
-		)
+		return errorsmod.Wrap(sdkerrors.ErrInvalidRequest, "empty description")
 	}
 
 	if msg.CommissionRate != nil {
 		if msg.CommissionRate.GT(math.LegacyOneDec()) || msg.CommissionRate.IsNegative() {
-			return nil, errorsmod.Wrap(sdkerrors.ErrInvalidRequest, "commission rate must be between 0 and 1 (inclusive)")
+			return errorsmod.Wrap(sdkerrors.ErrInvalidRequest, "commission rate must be between 0 and 1 (inclusive)")
 		}
 
 		minCommissionRate, err := k.MinCommissionRate(ctx)
 		if err != nil {
-			return nil, errorsmod.Wrap(sdkerrors.ErrLogic, err.Error())
+			return errorsmod.Wrap(sdkerrors.ErrLogic, err.Error())
 		}
 
 		if msg.CommissionRate.LT(minCommissionRate) {
-			return nil, errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "commission rate cannot be less than the min commission rate %s", minCommissionRate.String())
+			return errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "commission rate cannot be less than the min commission rate %s", minCommissionRate.String())
 		}
 	}
 
 	// validator must already be registered
 	validator, err := k.GetValidator(ctx, valAddr)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	// replace all editable fields (clients should autofill existing values)
 	description, err := validator.Description.UpdateDescription(msg.Description)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	validator.Description = description
@@ -212,43 +192,30 @@ func (k msgServer) EditValidator(ctx context.Context, msg *types.MsgEditValidato
 	if msg.CommissionRate != nil {
 		commission, err := k.UpdateValidatorCommission(ctx, validator, *msg.CommissionRate)
 		if err != nil {
-			return nil, err
+			return err
 		}
 
 		// call the before-modification hook since we're about to update the commission
 		if err := k.Hooks().BeforeValidatorModified(ctx, valAddr); err != nil {
-			return nil, err
+			return err
 		}
 
 		validator.Commission = commission
 	}
 
-	if msg.MinSelfDelegation != nil {
-		if !msg.MinSelfDelegation.GT(validator.MinSelfDelegation) {
-			return nil, types.ErrMinSelfDelegationDecreased
-		}
-
-		//if msg.MinSelfDelegation.GT(validator.Tokens) {
-		//	return nil, types.ErrSelfDelegationBelowMinimum
-		//}
-
-		validator.MinSelfDelegation = *msg.MinSelfDelegation
-	}
-
 	err = k.SetValidator(ctx, validator)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	if err := k.EventService.EventManager(ctx).EmitKV(
 		types.EventTypeEditValidator,
 		event.NewAttribute(types.AttributeKeyCommissionRate, validator.Commission.String()),
-		event.NewAttribute(types.AttributeKeyMinSelfDelegation, validator.MinSelfDelegation.String()),
 	); err != nil {
-		return nil, err
+		return err
 	}
 
-	return &types.MsgEditValidatorResponse{}, nil
+	return nil
 }
 
 // Delegate defines a method for performing a delegation of coins from a delegator to a validator
@@ -535,10 +502,6 @@ func (k msgServer) UpdateParams(ctx context.Context, msg *types.MsgUpdateParams)
 			// set the commission rate to min rate
 			if val.Commission.CommissionRates.Rate.LT(minRate) {
 				val.Commission.CommissionRates.Rate = minRate
-				// set the max rate to minRate if it is less than min rate
-				if val.Commission.CommissionRates.MaxRate.LT(minRate) {
-					val.Commission.CommissionRates.MaxRate = minRate
-				}
 
 				val.Commission.UpdateTime = k.HeaderService.HeaderInfo(ctx).Time
 				if err := k.SetValidator(ctx, val); err != nil {
@@ -572,126 +535,42 @@ func validatePubKey(pk cryptotypes.PubKey, knownPubKeyTypes []string) error {
 	return nil
 }
 
-// RotateConsPubKey handles the rotation of a validator's consensus public key.
-// It validates the new key, checks for conflicts, and updates the necessary state.
-// The function requires that the validator params are not nil for successful execution.
-//func (k msgServer) RotateConsPubKey(ctx context.Context, msg *types.MsgRotateConsPubKey) (res *types.MsgRotateConsPubKeyResponse, err error) {
-//	cv := msg.NewPubkey.GetCachedValue()
-//	if cv == nil {
-//		return nil, errorsmod.Wrap(sdkerrors.ErrInvalidType, "new public key is nil")
-//	}
-//
-//	pk, ok := cv.(cryptotypes.PubKey)
-//	if !ok {
-//		return nil, errorsmod.Wrapf(sdkerrors.ErrInvalidType, "expecting cryptotypes.PubKey, got %T", cv)
-//	}
-//
-//	pubkeyTypes, err := k.consensusKeeper.ValidatorPubKeyTypes(ctx)
-//	if err != nil {
-//		return nil, err
-//	}
-//
-//	if pubkeyTypes == nil {
-//		return nil, errorsmod.Wrap(sdkerrors.ErrInvalidRequest, "validator params are not set")
-//	}
-//
-//	if err = validatePubKey(pk, pubkeyTypes); err != nil {
-//		return nil, err
-//	}
-//
-//	err = k.checkConsKeyAlreadyUsed(ctx, pk)
-//	if err != nil {
-//		return nil, err
-//	}
-//
-//	valAddr, err := k.validatorAddressCodec.StringToBytes(msg.ValidatorAddress)
-//	if err != nil {
-//		return nil, err
-//	}
-//
-//	validator, err := k.Keeper.GetValidator(ctx, valAddr)
-//	if err != nil {
-//		return nil, err
-//	}
-//
-//	if validator.GetOperator() == "" {
-//		return nil, types.ErrNoValidatorFound
-//	}
-//
-//	if status := validator.GetStatus(); status != sdk.Bonded {
-//		return nil, errorsmod.Wrapf(sdkerrors.ErrInvalidType, "validator status is not bonded, got %x", status)
-//	}
-//
-//	// Check if the validator is exceeding parameter MaxConsPubKeyRotations within the
-//	// unbonding period by iterating ConsPubKeyRotationHistory.
-//	err = k.ExceedsMaxRotations(ctx, valAddr)
-//	if err != nil {
-//		return nil, err
-//	}
-//
-//	// Check if the signing account has enough balance to pay KeyRotationFee
-//	// KeyRotationFees are sent to the community fund.
-//	params, err := k.Params.Get(ctx)
-//	if err != nil {
-//		return nil, err
-//	}
-//
-//	err = k.Keeper.bankKeeper.SendCoinsFromAccountToModule(ctx, sdk.AccAddress(valAddr), types.PoolModuleName, sdk.NewCoins(params.KeyRotationFee))
-//	if err != nil {
-//		return nil, err
-//	}
-//
-//	// Add ConsPubKeyRotationHistory for tracking rotation
-//	err = k.setConsPubKeyRotationHistory(
-//		ctx,
-//		valAddr,
-//		validator.ConsensusPubkey,
-//		msg.NewPubkey,
-//		params.KeyRotationFee,
-//	)
-//	if err != nil {
-//		return nil, err
-//	}
-//
-//	return res, nil
-//}
-
 // checkConsKeyAlreadyUsed returns an error if the consensus public key is already used,
 // in ConsAddrToValidatorIdentifierMap, OldToNewConsAddrMap, or in the current block (RotationHistory).
-//func (k Keeper) checkConsKeyAlreadyUsed(ctx context.Context, newConsPubKey cryptotypes.PubKey) error {
-//	newConsAddr := sdk.ConsAddress(newConsPubKey.Address())
-//	rotatedTo, err := k.ConsAddrToValidatorIdentifierMap.Get(ctx, newConsAddr)
-//	if err != nil && !errors.Is(err, collections.ErrNotFound) {
-//		return err
-//	}
-//
-//	if rotatedTo != nil {
-//		return sdkerrors.ErrInvalidAddress.Wrap(
-//			"public key was already used")
-//	}
-//
-//	// check in the current block
-//	rotationHistory, err := k.GetBlockConsPubKeyRotationHistory(ctx)
-//	if err != nil {
-//		return err
-//	}
-//
-//	for _, rotation := range rotationHistory {
-//		cachedValue := rotation.NewConsPubkey.GetCachedValue()
-//		if cachedValue == nil {
-//			return sdkerrors.ErrInvalidAddress.Wrap("new public key is nil")
-//		}
-//		if bytes.Equal(cachedValue.(cryptotypes.PubKey).Address(), newConsAddr) {
-//			return sdkerrors.ErrInvalidAddress.Wrap("public key was already used")
-//		}
-//	}
-//
-//	// checks if NewPubKey is not duplicated on ValidatorsByConsAddr
-//	//_, err = k.Keeper.ValidatorByConsAddr(ctx, newConsAddr)
-//	_, err = k.ValidatorByConsAddr(ctx, newConsAddr)
-//	if err == nil {
-//		return types.ErrValidatorPubKeyExists
-//	}
-//
-//	return nil
-//}
+func (k Keeper) checkConsKeyAlreadyUsed(ctx context.Context, newConsPubKey cryptotypes.PubKey) error {
+	newConsAddr := sdk.ConsAddress(newConsPubKey.Address())
+	rotatedTo, err := k.ConsAddrToValidatorIdentifierMap.Get(ctx, newConsAddr)
+	if err != nil && !errors.Is(err, collections.ErrNotFound) {
+		return err
+	}
+
+	if rotatedTo != nil {
+		return sdkerrors.ErrInvalidAddress.Wrap(
+			"public key was already used")
+	}
+
+	// check in the current block
+	rotationHistory, err := k.GetBlockConsPubKeyRotationHistory(ctx)
+	if err != nil {
+		return err
+	}
+
+	for _, rotation := range rotationHistory {
+		cachedValue := rotation.NewConsPubkey.GetCachedValue()
+		if cachedValue == nil {
+			return sdkerrors.ErrInvalidAddress.Wrap("new public key is nil")
+		}
+		if bytes.Equal(cachedValue.(cryptotypes.PubKey).Address(), newConsAddr) {
+			return sdkerrors.ErrInvalidAddress.Wrap("public key was already used")
+		}
+	}
+
+	// checks if NewPubKey is not duplicated on ValidatorsByConsAddr
+	//_, err = k.Keeper.ValidatorByConsAddr(ctx, newConsAddr)
+	_, err = k.ValidatorByConsAddr(ctx, newConsAddr)
+	if err == nil {
+		return types.ErrValidatorPubKeyExists
+	}
+
+	return nil
+}

@@ -7,27 +7,25 @@ import (
 )
 
 // NewCommissionRates returns an initialized validator commission rates.
-func NewCommissionRates(rate, maxRate, maxChangeRate math.LegacyDec) CommissionRates {
+func NewCommissionRates(rate math.LegacyDec) CommissionRates {
 	return CommissionRates{
-		Rate:          rate,
-		MaxRate:       maxRate,
-		MaxChangeRate: maxChangeRate,
+		Rate: rate,
 	}
 }
 
 // NewCommission returns an initialized validator commission.
 func NewCommission(rate, maxRate, maxChangeRate math.LegacyDec) Commission {
 	return Commission{
-		CommissionRates: NewCommissionRates(rate, maxRate, maxChangeRate),
+		CommissionRates: NewCommissionRates(rate),
 		UpdateTime:      time.Unix(0, 0).UTC(),
 	}
 }
 
 // NewCommissionWithTime returns an initialized validator commission with a specified
 // update time which should be the current block BFT time.
-func NewCommissionWithTime(rate, maxRate, maxChangeRate math.LegacyDec, updatedAt time.Time) Commission {
+func NewCommissionWithTime(rate math.LegacyDec, updatedAt time.Time) Commission {
 	return Commission{
-		CommissionRates: NewCommissionRates(rate, maxRate, maxChangeRate),
+		CommissionRates: NewCommissionRates(rate),
 		UpdateTime:      updatedAt,
 	}
 }
@@ -36,31 +34,11 @@ func NewCommissionWithTime(rate, maxRate, maxChangeRate math.LegacyDec, updatedA
 // parameters. If validation fails, an SDK error is returned.
 func (cr CommissionRates) Validate() error {
 	switch {
-	case cr.MaxRate.IsNegative():
-		// max rate cannot be negative
-		return ErrCommissionNegative
-
-	case cr.MaxRate.GT(math.LegacyOneDec()):
-		// max rate cannot be greater than 1
-		return ErrCommissionHuge
-
 	case cr.Rate.IsNegative():
 		// rate cannot be negative
 		return ErrCommissionNegative
 
-	case cr.Rate.GT(cr.MaxRate):
-		// rate cannot be greater than the max rate
-		return ErrCommissionGTMaxRate
-
-	case cr.MaxChangeRate.IsNegative():
-		// change rate cannot be negative
-		return ErrCommissionChangeRateNegative
-
-	case cr.MaxChangeRate.GT(cr.MaxRate):
-		// change rate cannot be greater than the max rate
-		return ErrCommissionChangeRateGTMaxRate
 	}
-
 	return nil
 }
 
@@ -75,14 +53,6 @@ func (c Commission) ValidateNewRate(newRate math.LegacyDec, blockTime time.Time)
 	case newRate.IsNegative():
 		// new rate cannot be negative
 		return ErrCommissionNegative
-
-	case newRate.GT(c.MaxRate):
-		// new rate cannot be greater than the max rate
-		return ErrCommissionGTMaxRate
-
-	case newRate.Sub(c.Rate).GT(c.MaxChangeRate):
-		// new rate % points change cannot be greater than the max change rate
-		return ErrCommissionGTMaxChangeRate
 	}
 
 	return nil

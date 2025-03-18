@@ -9,7 +9,6 @@ import (
 	flag "github.com/spf13/pflag"
 
 	"cosmossdk.io/core/address"
-	errorsmod "cosmossdk.io/errors"
 	"cosmossdk.io/math"
 	"cosmossdk.io/x/staking/types"
 
@@ -18,7 +17,6 @@ import (
 	"github.com/cosmos/cosmos-sdk/client/tx"
 	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/cosmos/cosmos-sdk/version"
 )
 
@@ -143,24 +141,12 @@ func NewEditValidatorCmd() *cobra.Command {
 				newRate = &rate
 			}
 
-			var newMinSelfDelegation *math.Int
-
-			minSelfDelegationString, _ := cmd.Flags().GetString(FlagMinSelfDelegation)
-			if minSelfDelegationString != "" {
-				msb, ok := math.NewIntFromString(minSelfDelegationString)
-				if !ok {
-					return errorsmod.Wrap(sdkerrors.ErrInvalidRequest, "minimum self delegation must be a positive integer")
-				}
-
-				newMinSelfDelegation = &msb
-			}
-
 			valAddr, err := clientCtx.ValidatorAddressCodec.BytesToString(clientCtx.GetFromAddress())
 			if err != nil {
 				return err
 			}
 
-			msg := types.NewMsgEditValidator(valAddr, description, newRate, newMinSelfDelegation)
+			msg := types.NewMsgEditValidator(valAddr, description, newRate)
 
 			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)
 		},

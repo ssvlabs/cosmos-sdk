@@ -44,13 +44,12 @@ func NewMsgCreateValidator(
 		}
 	}
 	return &MsgCreateValidator{
-		Description:       description,
-		ValidatorAddress:  valAddr,
-		Pubkey:            pkAny,
-		Commission:        commission,
-		MinSelfDelegation: minSelfDelegation,
-		Capital:           capital,
-		Meta:              meta,
+		Description:      description,
+		ValidatorAddress: valAddr,
+		Pubkey:           pkAny,
+		Commission:       commission,
+		Capital:          capital,
+		Meta:             meta,
 	}, nil
 }
 
@@ -109,12 +108,11 @@ func (msg MsgCreateValidator) UnpackInterfaces(unpacker gogoprotoany.AnyUnpacker
 }
 
 // NewMsgEditValidator creates a new MsgEditValidator instance
-func NewMsgEditValidator(valAddr string, description Description, newRate *math.LegacyDec, newMinSelfDelegation *math.Int) *MsgEditValidator {
+func NewMsgEditValidator(valAddr string, description Description, newRate *math.LegacyDec) *MsgEditValidator {
 	return &MsgEditValidator{
-		Description:       description,
-		CommissionRate:    newRate,
-		ValidatorAddress:  valAddr,
-		MinSelfDelegation: newMinSelfDelegation,
+		Description:      description,
+		CommissionRate:   newRate,
+		ValidatorAddress: valAddr,
 	}
 }
 

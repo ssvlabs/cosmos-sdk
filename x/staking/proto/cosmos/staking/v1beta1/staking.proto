@@ -46,20 +46,6 @@ message CommissionRates {
     (gogoproto.nullable)   = false,
     (amino.dont_omitempty) = true
   ];
-  // max_rate defines the maximum commission rate which validator can ever charge, as a fraction.
-  string max_rate = 2 [
-    (cosmos_proto.scalar)  = "cosmos.Dec",
-    (gogoproto.customtype) = "cosmossdk.io/math.LegacyDec",
-    (gogoproto.nullable)   = false,
-    (amino.dont_omitempty) = true
-  ];
-  // max_change_rate defines the maximum daily increase of the validator commission, as a fraction.
-  string max_change_rate = 3 [
-    (cosmos_proto.scalar)  = "cosmos.Dec",
-    (gogoproto.customtype) = "cosmossdk.io/math.LegacyDec",
-    (gogoproto.nullable)   = false,
-    (amino.dont_omitempty) = true
-  ];
 }
 
 // Commission defines commission parameters for a given validator.

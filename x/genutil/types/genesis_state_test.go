@@ -69,7 +69,7 @@ func TestValidateGenesisBadMessage(t *testing.T) {
 	desc := stakingtypes.NewDescription("testname", "", "", "", "")
 	pk1Addr, err := codectestutil.CodecOptions{}.GetValidatorCodec().BytesToString(pk1.Address())
 	require.NoError(t, err)
-	msg1 := stakingtypes.NewMsgEditValidator(pk1Addr, desc, nil, nil)
+	msg1 := stakingtypes.NewMsgEditValidator(pk1Addr, desc, nil)
 
 	txConfig := moduletestutil.MakeTestEncodingConfig(codectestutil.CodecOptions{}, staking.AppModule{}, genutil.AppModule{}).TxConfig
 	txBuilder := txConfig.NewTxBuilder()

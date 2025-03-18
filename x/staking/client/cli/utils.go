@@ -110,17 +110,7 @@ func buildCommissionRates(rateStr, maxRateStr, maxChangeRateStr string) (commiss
 		return commission, err
 	}
 
-	maxRate, err := math.LegacyNewDecFromStr(maxRateStr)
-	if err != nil {
-		return commission, err
-	}
-
-	maxChangeRate, err := math.LegacyNewDecFromStr(maxChangeRateStr)
-	if err != nil {
-		return commission, err
-	}
-
-	commission = types.NewCommissionRates(rate, maxRate, maxChangeRate)
+	commission = types.NewCommissionRates(rate)
 
 	return commission, nil
 }
