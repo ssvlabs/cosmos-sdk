@@ -47,7 +47,8 @@ func (c Capital) HasEnoughFunds(required Capital) (bool, error) {
 		}
 
 		if !found {
-			return false, fmt.Errorf("token %s unsupported by validator, supported: %v", requiredToken.String(), extractTokenList(c.GetSlashableBalance()))
+			//return false, fmt.Errorf("token %s unsupported by validator, supported: %v", requiredToken.String(), extractTokenList(c.GetSlashableBalance()))
+			return false, nil
 		}
 	}
 
