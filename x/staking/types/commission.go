@@ -46,9 +46,9 @@ func (cr CommissionRates) Validate() error {
 // rate. If validation fails, an SDK error is returned.
 func (c Commission) ValidateNewRate(newRate math.LegacyDec, blockTime time.Time) error {
 	switch {
-	case blockTime.Sub(c.UpdateTime).Hours() < 24:
-		// new rate cannot be changed more than once within 24 hours
-		return ErrCommissionUpdateTime
+	//case blockTime.Sub(c.UpdateTime).Hours() < 24:
+	// new rate cannot be changed more than once within 24 hours
+	//return ErrCommissionUpdateTime
 
 	case newRate.IsNegative():
 		// new rate cannot be negative
