@@ -489,11 +489,14 @@ func New(l Logger, baseDir string, cfg Config) (NetworkI, error) {
 			return nil, err
 		}
 
+		capital := stakingtypes.Capital{}
+		meta := stakingtypes.Meta{}
 		createValMsg, err := stakingtypes.NewMsgCreateValidator(
 			sdk.ValAddress(addr).String(),
 			valPubKeys[i],
-			sdk.NewCoin(cfg.BondDenom, cfg.BondedTokens),
+			capital,
 			stakingtypes.NewDescription(nodeDirName, "", "", "", ""),
+			meta,
 			stakingtypes.NewCommissionRates(commission),
 			sdkmath.OneInt(),
 		)

@@ -71,10 +71,10 @@ func TestPotentialConsensusPower(t *testing.T) {
 		validator := Validator{
 			Capital: Capital{
 				SlashableBalance: []TokenBalance{
-					{Amount: MustCreateNewInt("3000000000")},
-					{Amount: MustCreateNewInt("500000000000000")},
+					{Amount: MustCreateNewInt("5000000000")},
+					{Amount: MustCreateNewInt("500000000")},
 				},
-				NonSlashableCapital: MustCreateNewInt("16000000000000000000"),
+				NonSlashableCapital: MustCreateNewInt("333300000"),
 			},
 		}
 
