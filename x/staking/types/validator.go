@@ -383,7 +383,11 @@ func (v Validator) ConsensusPower(powerReduction math.Int) int64 {
 func (v Validator) PotentialConsensusPower(powerReduction math.Int) int64 {
 	c := v.Capital
 
-	if len(c.SlashableBalance) == 0 && (c.NonSlashableCapital.IsNil() || c.NonSlashableCapital.IsZero()) {
+	if c.NonSlashableCapital.IsNil() || c.NonSlashableCapital.IsZero() {
+		return 0
+	}
+
+	if len(c.SlashableBalance) == 0 || containsZero(c.SlashableBalance) {
 		return 0
 	}
 
@@ -436,6 +440,15 @@ func (v Validator) PotentialConsensusPower(powerReduction math.Int) int64 {
 	}
 
 	return result.Int64()
+}
+
+func containsZero(balances []TokenBalance) bool {
+	for _, b := range balances {
+		if b.Amount.IsZero() {
+			return true
+		}
+	}
+	return false
 }
 
 // UpdateStatus updates the location of the shares within a validator
