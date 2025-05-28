@@ -141,20 +141,24 @@ func (w *builder) getTx() (*gogoTxWrapper, error) {
 	if err != nil {
 		return nil, fmt.Errorf("unable to parse fee: %w", err)
 	}
-	authInfo := &txv1beta1.AuthInfo{
-		SignerInfos: intoV2SignerInfo(w.signerInfos),
-		Fee:         fee,
-		Tip:         nil, // deprecated
-	}
 
 	bodyBytes, err := marshalOption.Marshal(body)
 	if err != nil {
 		return nil, fmt.Errorf("unable to marshal body: %w", err)
 	}
 
-	authInfoBytes, err := marshalOption.Marshal(authInfo)
-	if err != nil {
-		return nil, fmt.Errorf("unable to marshal auth info: %w", err)
+	var authInfoBytes []byte
+	if len(w.signerInfos) > 0 {
+		authInfo := &txv1beta1.AuthInfo{
+			SignerInfos: intoV2SignerInfo(w.signerInfos),
+			Fee:         fee,
+			Tip:         nil, // deprecated
+		}
+
+		authInfoBytes, err = marshalOption.Marshal(authInfo)
+		if err != nil {
+			return nil, fmt.Errorf("unable to marshal auth info: %w", err)
+		}
 	}
 
 	txRawBytes, err := marshalOption.Marshal(&txv1beta1.TxRaw{
