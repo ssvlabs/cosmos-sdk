@@ -698,9 +698,9 @@ func (app *BaseApp) cacheTxContext(ctx sdk.Context, txBytes []byte) (sdk.Context
 	return ctx.WithMultiStore(msCache), msCache
 }
 
-func (app *BaseApp) preBlock(req *abci.FinalizeBlockRequest) (*abci.ExecTxResult, []abci.Event, error) {
+func (app *BaseApp) preBlock(req *abci.FinalizeBlockRequest) ([]*abci.ExecTxResult, []abci.Event, error) {
 	var events []abci.Event
-	var resp *abci.ExecTxResult
+	var resp []*abci.ExecTxResult
 	var err error
 	if app.preBlocker != nil {
 		ctx := app.finalizeBlockState.Context().WithEventManager(sdk.NewEventManager())

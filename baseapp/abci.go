@@ -817,7 +817,7 @@ func (app *BaseApp) internalFinalizeBlock(ctx context.Context, req *abci.Finaliz
 	}
 	events = append(events, preblockEvents...)
 	if txResp != nil {
-		txResults = append(txResults, txResp)
+		txResults = append(txResults, txResp...)
 	}
 
 	beginBlock, err := app.beginBlock(req)
